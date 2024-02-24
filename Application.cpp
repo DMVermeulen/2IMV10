@@ -203,7 +203,8 @@ void Application::mouse_callback(GLFWwindow* window, double xposIn, double yposI
 	m_app->lastX = xpos;
 	m_app->lastY = ypos;
 	
-	m_app->camera.ProcessMouseMovement(xoffset, yoffset);
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+		m_app->camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
 void Application::scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
