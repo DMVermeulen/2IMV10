@@ -10,3 +10,8 @@ struct Vertex {
 	glm::vec3 pos;
 	//add other attributes(e.g., color, normal...)
 };
+
+struct AABB {
+	glm::vec3 minPos;
+	glm::vec3 maxPos;
+};

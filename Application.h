@@ -52,7 +52,8 @@ private:
 	static void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
 	static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
-	//pass as parameters to Scene methods
-	int triangulateNumber=4;
-	float radius=0.5;
+	//UI related
+	void renderUI();
+	//UI callbacks
+
 };

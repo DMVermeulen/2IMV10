@@ -26,3 +26,32 @@ void Scene::drawAllInstances() {
 	}
 }
 
+void Scene::setRadius(float r) {
+	radius = r;
+	updateMeshNewRadius();
+	
+}
+
+void Scene::setNTris(int n) {
+	nTris = n;
+	updateMeshNewNTris();
+}
+
+void Scene::updateMeshNewRadius() {
+	for (Instance& instance : instances) {
+		instance.recreateMeshNewRadius(radius, nTris);
+	}
+}
+
+void Scene::updateMeshNewNTris() {
+	for (Instance& instance : instances) {
+		instance.recreateMeshNewNTris(radius, nTris);
+	}
+}
+
+void Scene::edgeBundling(float p, float radius, int nTris) {
+	for (Instance& instance : instances) {
+		instance.edgeBundling(p,radius,nTris);
+	}
+}
+
