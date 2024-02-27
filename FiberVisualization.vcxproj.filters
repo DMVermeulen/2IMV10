@@ -101,5 +101,8 @@
     <ClInclude Include="Camera.h">
       <Filter>源文件\Application</Filter>
     </ClInclude>
+    <ClInclude Include="ComputeShader.h">
+      <Filter>源文件\Shader</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

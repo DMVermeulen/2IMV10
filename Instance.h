@@ -4,6 +4,7 @@
 #include<string>
 #include"structures.h"
 #include"glad/glad.h"
+#include"ComputeShader.h"
 
 class Instance {
 public:
@@ -53,5 +54,9 @@ private:
 	std::vector<float> computeDensity(float p);    //called every time when user-specified parameter changes (the kernel width)
 	std::vector<glm::vec3> advection(std::vector<float>& denseMap,float p);         //called every time when user-specified parameter changes (the kernel width)
 	std::vector<glm::vec3> smoothing(std::vector<glm::vec3>& newTracks);         //called every time when user-specified parameter changes (the kernel width)
+
+	//Compute shaders to accelerate edge bundling 
+	ComputeShader denseEstimationShader;
+	ComputeShader advectionShader;
 
 };
