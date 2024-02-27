@@ -7,7 +7,9 @@
 
 #define INFINITE 999999999
 
-Instance::Instance(std::string path, float radius, int nTris) {
+Instance::Instance(std::string path, float radius, int nTris)
+	:denseEstimationShader("D:/Projects/FiberVisualization/shaders/denseEstimation.cs")
+	,advectionShader("D:/Projects/FiberVisualization/shaders/advection.cs"){
 	loadTracksFromTCK(path);
 	updateTubes(tracks);
 	updateTriangles(radius, nTris);
@@ -17,10 +19,65 @@ Instance::Instance(std::string path, float radius, int nTris) {
 	//vertices = { Vertex{glm::vec3(0.5f,  0.5f, 0.0f)},Vertex{glm::vec3(0.5f, -0.5f, 0.0f)},Vertex{glm::vec3(-0.5f, -0.5f, 0.0f)},Vertex{glm::vec3(-0.5f,  0.5f, 0.0f)} };
 	//indices = { 0,1,3,1,2,3 };
 	//initVertexIndiceBuffer();
+
+	//init compute shaders
+	denseEstimationShader = ComputeShader("D:/Projects/FiberVisualization/shaders/denseEstimation.cs");
+	//advectionShader = ComputeShader("");
+	initTextures();
 }
 
 Instance::~Instance() {
 
+}
+
+void Instance::initTextures() {
+	//Currently we implement all textures as 1-D buffer
+	//original tracks
+	glGenBuffers(1, &texOriTracks);
+	glBindBuffer(GL_TEXTURE_BUFFER, texOriTracks);
+	glBufferData(GL_TEXTURE_BUFFER, tracks.size() * 3 * sizeof(float), tracks.data(), GL_STATIC_DRAW);
+
+	//temp tracks
+	glGenBuffers(1, &texTempTracks);
+	glBindBuffer(GL_TEXTURE_BUFFER, texTempTracks);
+	glBufferData(GL_TEXTURE_BUFFER, tracks.size() * 3 * sizeof(float), NULL, GL_STATIC_DRAW);
+
+	//voxelCount (3D-texture)
+	//glGenTextures(1, &texVoxelCount);
+	//glBindTexture(GL_TEXTURE_3D, texVoxelCount);
+	//glTexImage3D(GL_TEXTURE_3D, 0, GL_R32UI, nVoxels_X, nVoxels_Y, nVoxels_Z, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, voxelCount.data());
+
+	//glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	//glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	//glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	//glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	//voxelCount (1-D buffer)
+	glGenBuffers(1, &texVoxelCount);
+	glBindBuffer(GL_TEXTURE_BUFFER, texVoxelCount);
+	glBufferData(GL_TEXTURE_BUFFER, voxelCount.size() * sizeof(uint32_t), voxelCount.data(), GL_STATIC_READ);
+
+	//denseMap (3D-texture)
+	//glGenTextures(1, &texDenseMap);
+	//glBindTexture(GL_TEXTURE_3D, texDenseMap);
+	//glTexImage3D(GL_TEXTURE_3D, 0, GL_R32UI, nVoxels_X, nVoxels_Y, nVoxels_Z, 0, GL_RED_INTEGER, GL_FLOAT, voxelCount.data());
+
+	//glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	//glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	//glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	//glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	//denseMap (1-D buffer)
+	glGenBuffers(1, &texDenseMap);
+	glBindBuffer(GL_TEXTURE_BUFFER, texDenseMap);
+	glBufferData(GL_TEXTURE_BUFFER, voxelCount.size() * sizeof(uint32_t), NULL, GL_STATIC_READ| GL_STATIC_DRAW);
+
+	//updated tracks
+	glGenBuffers(1, &texUpdatedTracks);
+	glBindBuffer(GL_TEXTURE_BUFFER, texUpdatedTracks);
+	glBufferData(GL_TEXTURE_BUFFER, tracks.size() * 3 * sizeof(float), NULL, GL_STATIC_DRAW);
 }
 
 int Instance::getNumberVertices(){
@@ -280,7 +337,7 @@ void Instance::spaceVoxelization() {
 		uint32_t level_X = std::min(float(nVoxels_X - 1), deltaP.x / voxelUnitSize);
 		uint32_t level_Y = std::min(float(nVoxels_Y - 1), deltaP.y / voxelUnitSize);
 		uint32_t level_Z = std::min(float(nVoxels_Z - 1), deltaP.z / voxelUnitSize);
-		uint32_t index = nVoxels_X * nVoxels_Y*level_Z + nVoxels_Y * level_X + level_Y;
+		uint32_t index = nVoxels_X * nVoxels_Y*level_Z + nVoxels_X * level_Y + level_X;
 		voxelCount[index]++;
 	}
 }
@@ -339,8 +396,8 @@ std::vector<float> Instance::computeDensity(float p) {
 		float dense = 0;
 		int Z = i / (nVoxels_X*nVoxels_Y);
 		int mod= i % (nVoxels_X*nVoxels_Y);
-		int X = mod / nVoxels_Y;
-		int Y = mod % nVoxels_Y;
+		int X = mod % nVoxels_X;
+		int Y = mod / nVoxels_X;
 		for (int dx = -kernelR; dx < kernelR; dx++) {
 			for (int dy = -kernelR; dy < kernelR; dy++) {
 				for (int dz = -kernelR; dz < kernelR; dz++) {
@@ -359,7 +416,7 @@ std::vector<float> Instance::computeDensity(float p) {
 					if (dot > PR2)
 						continue;
 
-					uint32_t index = nVoxels_X * nVoxels_Y*nz + nVoxels_Y * nx + ny;
+					uint32_t index = nVoxels_X * nVoxels_Y*nz + nVoxels_X * ny + nx;
 					index = std::min(int(index), int(voxelCount.size()));
 					int pointCnt = voxelCount[index];
 					
@@ -368,6 +425,8 @@ std::vector<float> Instance::computeDensity(float p) {
 			}
 		}
 		denseMap[i] = dense;
+		if (i == 920)
+			std::cout << dense;
 	}
 
 	return denseMap;
@@ -429,7 +488,7 @@ std::vector<glm::vec3> Instance::advection(std::vector<float>& denseMap, float p
 		X = std::min(X, int(nVoxels_X - 1));
 		Y = std::min(Y, int(nVoxels_Y - 1));
 		Z = std::min(Z, int(nVoxels_Z - 1));
-		uint32_t indexA= nVoxels_X * nVoxels_Y*Z + nVoxels_Y * X + Y;
+		uint32_t indexA= nVoxels_X * nVoxels_Y*Z + nVoxels_X * Y + X;
 		for (int dx = -kernelR; dx < kernelR; dx++) {
 			for (int dy = -kernelR; dy < kernelR; dy++) {
 				for (int dz = -kernelR; dz < kernelR; dz++) {
@@ -449,7 +508,7 @@ std::vector<glm::vec3> Instance::advection(std::vector<float>& denseMap, float p
 						continue;
 					if (diffPos > 1)
 						continue;
-					uint32_t indexB = nVoxels_X * nVoxels_Y*nz + nVoxels_Y * nx + ny;
+					uint32_t indexB = nVoxels_X * nVoxels_Y*nz + nVoxels_X * ny + nx;
 					indexB = std::min(int(indexB), int(denseMap.size()));
 					float diffDense = denseMap[indexB] - denseMap[indexA];
 
@@ -479,4 +538,65 @@ std::vector<glm::vec3> Instance::advection(std::vector<float>& denseMap, float p
 //Output: updated tracks
 std::vector<glm::vec3> Instance::smoothing(std::vector<glm::vec3>& newTracks) {
 	return newTracks;
+}
+
+void Instance::edgeBundlingGPU(float p, float radius, int nTris) {
+	denseEstimationPass(p);
+	advectionPass(p);
+}
+
+//voxelVount->denseMap
+void Instance::denseEstimationPass(float p) {
+	//glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_3D, texVoxelCount);
+	//glBindImageTexture(0, texDenseMap, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32UI);
+
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texVoxelCount);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, texDenseMap);
+	denseEstimationShader.use();
+	denseEstimationShader.setInt("totalSize", voxelCount.size());   
+	denseEstimationShader.setInt("nVoxels_X", nVoxels_X);
+	denseEstimationShader.setInt("nVoxels_Y", nVoxels_Y);
+	denseEstimationShader.setInt("nVoxels_Z", nVoxels_Z);
+	denseEstimationShader.setInt("kernelR", p*nVoxels_Z);
+	denseEstimationShader.setFloat("voxelUnitSize", voxelUnitSize);
+	glDispatchCompute(1+(unsigned int)voxelCount.size()/128, 1, 1);
+
+	// make sure writing to buffer has finished before read
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+	////explicitly unbind textures and images after use
+	//glBindTexture(GL_TEXTURE_3D, 0);
+	//glBindImageTexture(0, 0, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32UI);
+
+	glBindBuffer(GL_ARRAY_BUFFER, texDenseMap); 
+	float* bufferData = (float*)glMapBuffer(GL_ARRAY_BUFFER, GL_READ_ONLY);
+	for (int i = 0; i < voxelCount.size(); i++) {
+		if(i==920)
+			std::cout<<bufferData[i];
+	}
+}
+
+void Instance::advectionPass(float p) {
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, texOriTracks);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, texUpdatedTracks);
+	advectionShader.use();
+	advectionShader.setInt("totalSize", tracks.size());
+	advectionShader.setInt("nVoxels_X", nVoxels_X);
+	advectionShader.setInt("nVoxels_Y", nVoxels_Y);
+	advectionShader.setInt("nVoxels_Z", nVoxels_Z);
+	advectionShader.setInt("kernelR", p*nVoxels_Z);
+	advectionShader.setFloat("voxelUnitSize", voxelUnitSize);
+	advectionShader.setVec3("aabbMin", aabb.minPos);
+	advectionShader.setInt("totalVoxels", voxelCount.size());
+	glDispatchCompute(1 + (unsigned int)tracks.size() / 128, 1, 1);
+
+	// make sure writing to buffer has finished before read
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+	glBindBuffer(GL_ARRAY_BUFFER, texUpdatedTracks); 
+    glm::vec3* bufferData = (glm::vec3*)glMapBuffer(GL_ARRAY_BUFFER, GL_READ_ONLY);
+    for (int i = 0; i < tracks.size(); i++) {
+		std::cout<<bufferData[i].x;
+    }
 }

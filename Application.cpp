@@ -171,7 +171,8 @@ void Application::renderUI() {
 			scene.setNTris(int(8 * tubeGranularity));
 		}
 		if (ImGui::SliderFloat("Fiber bundling", &fiberBundling, 0.0f, 1.0f)) {
-			scene.edgeBundling(fiberBundling/10,tubeRadius, int(8 * tubeGranularity));
+			//scene.edgeBundling(fiberBundling/10,tubeRadius, int(8 * tubeGranularity));
+			scene.edgeBundling(0.5, tubeRadius, int(8 * tubeGranularity));
 		}
 		ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
 

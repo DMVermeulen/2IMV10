@@ -19,7 +19,7 @@ public:
 private:
 	//parameters used to build triangles from streamlines
 	float radius = 0.3f;
-	float nTris = 3;
+	int nTris = 3;
 
 	std::vector<Instance> instances;
 	void updateMeshNewRadius();

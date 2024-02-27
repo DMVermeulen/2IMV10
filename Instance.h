@@ -20,6 +20,7 @@ public:
 	void recreateMeshNewRadius(float radius, int nTris);
 	void recreateMeshNewNTris(float radius, int nTris);
 	void edgeBundling(float p, float radius, int nTris);
+	void edgeBundlingGPU(float p, float radius, int nTris);
 private:
 	//std::vector<std::vector<glm::vec3>> tracks;
 	std::vector<glm::vec3> tracks;     //stores the original tracks without bundling
@@ -39,7 +40,7 @@ private:
 	void updateVertexIndiceBuffer();
 	std::vector<glm::vec3> readTCK(const std::string& filename, int offset);
 
-	//edge-bundling related
+	//edge-bundling related structures on host 
 	const uint32_t nVoxels_Z = 50;
 	uint32_t nVoxels_X;
 	uint32_t nVoxels_Y;
@@ -58,5 +59,19 @@ private:
 	//Compute shaders to accelerate edge bundling 
 	ComputeShader denseEstimationShader;
 	ComputeShader advectionShader;
+
+	//GPU passes for edge bundling
+	void denseEstimationPass(float p);
+	void advectionPass(float p);
+
+	//textures used on GPU
+	GLuint texOriTracks;
+	GLuint texTempTracks;     //store intermediate result for each iteration, initialized to oriTracks
+	GLuint texVoxelCount;  //Todo: now it's generated using CPU, can be performed by GPU using atomic add
+	GLuint texDenseMap;
+	GLuint texUpdatedTracks;  
+
+	void initTextures();
+
 
 };
