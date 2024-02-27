@@ -70,6 +70,7 @@ private:
 	GLuint texVoxelCount;  //Todo: now it's generated using CPU, can be performed by GPU using atomic add
 	GLuint texDenseMap;
 	GLuint texUpdatedTracks;  
+	GLuint debug;
 
 	void initTextures();
 

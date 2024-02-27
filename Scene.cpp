@@ -51,8 +51,8 @@ void Scene::updateMeshNewNTris() {
 
 void Scene::edgeBundling(float p, float radius, int nTris) {
 	for (Instance& instance : instances) {
-		//instance.edgeBundling(p,radius,nTris);
-		instance.edgeBundlingGPU(p, radius, nTris);
+		instance.edgeBundling(p,radius,nTris);
+		//instance.edgeBundlingGPU(p, radius, nTris);
 	}
 }
 

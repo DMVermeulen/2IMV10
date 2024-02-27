@@ -78,6 +78,11 @@ void Instance::initTextures() {
 	glGenBuffers(1, &texUpdatedTracks);
 	glBindBuffer(GL_TEXTURE_BUFFER, texUpdatedTracks);
 	glBufferData(GL_TEXTURE_BUFFER, tracks.size() * 3 * sizeof(float), NULL, GL_STATIC_DRAW);
+
+	//debug
+	glGenBuffers(1, &debug);
+	glBindBuffer(GL_TEXTURE_BUFFER, debug);
+	glBufferData(GL_TEXTURE_BUFFER, tracks.size() * 3 * sizeof(float), NULL, GL_STATIC_DRAW);
 }
 
 int Instance::getNumberVertices(){
@@ -123,7 +128,7 @@ std::vector<glm::vec3> Instance::readTCK(const std::string& filename, int offset
 
 		// Check if x is NaN, indicating the start of a new streamline
 		if (std::isnan(x)) {
-			if (debug % 50 != 0) {
+			if (debug % 500 != 0) {
 				debug++;
 				continue;
 			}
@@ -143,7 +148,7 @@ std::vector<glm::vec3> Instance::readTCK(const std::string& filename, int offset
 		else {
 			// Add the point to the current streamline
 			//currentStreamline.push_back(glm::vec3(x, y, z));
-			if (debug % 50 != 0) {
+			if (debug % 500 != 0) {
 				continue;
 			}
 			count++;
@@ -393,6 +398,8 @@ std::vector<float> Instance::computeDensity(float p) {
 	denseMap.resize(nVoxels_X*nVoxels_Y*nVoxels_Z);
 	int kernelR = p * nVoxels_Z;
 	for (int i = 0; i < denseMap.size(); i++) {
+		if(i%1000==0)
+		std::cout << i << std::endl;
 		float dense = 0;
 		int Z = i / (nVoxels_X*nVoxels_Y);
 		int mod= i % (nVoxels_X*nVoxels_Y);
@@ -479,6 +486,8 @@ std::vector<glm::vec3> Instance::advection(std::vector<float>& denseMap, float p
 	//}
 
 	for (int i = 0; i < tracks.size(); i++) {
+		if (i % 5 == 0)
+			std::cout << i << std::endl;
 		glm::vec3 grad = glm::vec3(0);
 		glm::vec3 point = tracks.at(i);
 		glm::vec3 deltaP = point - aabb.minPos;
@@ -530,7 +539,8 @@ std::vector<glm::vec3> Instance::advection(std::vector<float>& denseMap, float p
 		    newPoint = tracks[i] + kernelR*voxelUnitSize * glm::normalize(grad);
 		newTracks.push_back(newPoint);
 	}
-	std::cout << "done" << std::endl;
+	//std::cout << "done" << std::endl;
+	//std::cout << newTracks[22].x;
 	return newTracks;
 }
 
@@ -553,6 +563,7 @@ void Instance::denseEstimationPass(float p) {
 
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texVoxelCount);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, texDenseMap);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, debug);
 	denseEstimationShader.use();
 	denseEstimationShader.setInt("totalSize", voxelCount.size());   
 	denseEstimationShader.setInt("nVoxels_X", nVoxels_X);
@@ -569,17 +580,26 @@ void Instance::denseEstimationPass(float p) {
 	//glBindTexture(GL_TEXTURE_3D, 0);
 	//glBindImageTexture(0, 0, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32UI);
 
-	glBindBuffer(GL_ARRAY_BUFFER, texDenseMap); 
-	float* bufferData = (float*)glMapBuffer(GL_ARRAY_BUFFER, GL_READ_ONLY);
-	for (int i = 0; i < voxelCount.size(); i++) {
-		if(i==920)
-			std::cout<<bufferData[i];
-	}
+	//glBindBuffer(GL_ARRAY_BUFFER, texDenseMap); 
+	//float* bufferData = (float*)glMapBuffer(GL_ARRAY_BUFFER, GL_READ_ONLY);
+	//for (int i = 0; i < voxelCount.size(); i++) {
+	//	if(i==920)
+	//		std::cout<<bufferData[i];
+	//}
+
+	//glBindBuffer(GL_ARRAY_BUFFER, debug);
+	//uint32_t * debugData = (uint32_t*)glMapBuffer(GL_ARRAY_BUFFER, GL_READ_ONLY);
+	//for (int i = 0; i < voxelCount.size(); i++) {
+	//	if (voxelCount[i] == 0)
+	//		continue;
+	//	std::cout << debugData[i] << " " << voxelCount[i];
+	//}
 }
 
 void Instance::advectionPass(float p) {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, texOriTracks);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, texUpdatedTracks);
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, debug);
 	advectionShader.use();
 	advectionShader.setInt("totalSize", tracks.size());
 	advectionShader.setInt("nVoxels_X", nVoxels_X);
@@ -597,6 +617,12 @@ void Instance::advectionPass(float p) {
 	glBindBuffer(GL_ARRAY_BUFFER, texUpdatedTracks); 
     glm::vec3* bufferData = (glm::vec3*)glMapBuffer(GL_ARRAY_BUFFER, GL_READ_ONLY);
     for (int i = 0; i < tracks.size(); i++) {
-		std::cout<<bufferData[i].x;
+		float a = bufferData[i].x;
     }
+
+	//glBindBuffer(GL_ARRAY_BUFFER, debug);
+	//glm::vec3* debugData = (glm::vec3*)glMapBuffer(GL_ARRAY_BUFFER, GL_READ_ONLY);
+	//for (int i = 0; i < tracks.size(); i++) {
+	//	float a= debugData[i].x + tracks[i].x;
+	//}
 }

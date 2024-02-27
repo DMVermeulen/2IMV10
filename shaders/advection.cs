@@ -7,11 +7,15 @@ layout(binding = 1) buffer denseMap {
 };
 
 layout(binding = 2) buffer oriTracks {
-    vec3 oriTracksData[];
+    float oriTracksData[];
 };
 
 layout(binding = 3) buffer updatedTracks {
-    vec3 updatedTracksData[];
+    float updatedTracksData[];
+};
+
+layout(binding = 4) buffer debug {
+    float debugData[];
 };
 
 uniform int totalSize;
@@ -27,32 +31,32 @@ uniform int totalVoxels;
 // Compute shader entry point
 void main() {
     // Get global thread ID
-    uint globalID = gl_GlobalInvocationID.x;
+    int globalID = int(gl_GlobalInvocationID.x);
 
     // Check if global ID is within the valid range of the buffer
     if (globalID < totalSize) {
-		uint R2 = kernelR * kernelR;
-		uint kernelWidth = 2 * kernelR + 1;
+		int R2 = kernelR * kernelR;
+		int kernelWidth = 2 * kernelR + 1;
         vec3 grad = vec3(0);
-		vec3 point = oriTracksData[globalID];
+		vec3 point = vec3(oriTracksData[globalID*3],oriTracksData[globalID*3+1],oriTracksData[globalID*3+2]);
 		vec3 deltaP = point - aabbMin;
-		uint X = uint(deltaP.x / voxelUnitSize);
-		uint Y = uint(deltaP.y / voxelUnitSize);
-		uint Z = uint(deltaP.z / voxelUnitSize);
+		int X = int(deltaP.x / voxelUnitSize);
+		int Y = int(deltaP.y / voxelUnitSize);
+		int Z = int(deltaP.z / voxelUnitSize);
 		X = min(X, int(nVoxels_X - 1));
 		Y = min(Y, int(nVoxels_Y - 1));
 		Z = min(Z, int(nVoxels_Z - 1));
-		uint indexA= nVoxels_X * nVoxels_Y*Z + nVoxels_X * Y + X;
+		int indexA= nVoxels_X * nVoxels_Y*Z + nVoxels_X * Y + X;
 		for (int dx = -kernelR; dx < kernelR; dx++) {
 			for (int dy = -kernelR; dy < kernelR; dy++) {
 				for (int dz = -kernelR; dz < kernelR; dz++) {
-					uint nx = X + dx;
+					int nx = X + dx;
 					nx = max(nx, 0);
 					nx = min(nx, int(nVoxels_X - 1));
-					uint ny = Y + dy;
+					int ny = Y + dy;
 					ny = max(ny, 0);
 					ny = min(ny, int(nVoxels_Y - 1));
-					uint nz = Z + dz;
+					int nz = Z + dz;
 					nz = max(nz, 0);
 					nz = min(nz, int(nVoxels_Z - 1));
 
@@ -62,7 +66,7 @@ void main() {
 						continue;
 					if (diffPos > 1)
 						continue;
-					uint indexB = nVoxels_X * nVoxels_Y*nz + nVoxels_X * ny + nx;
+					int indexB = nVoxels_X * nVoxels_Y*nz + nVoxels_X * ny + nx;
 					indexB = min(indexB, totalVoxels);
 					float diffDense = denseMapData[indexB] - denseMapData[indexA];
 
@@ -76,7 +80,14 @@ void main() {
 			delta = vec3(0);
 		else
 		    delta = kernelR*voxelUnitSize * normalize(grad);
-		updatedTracksData[globalID] = oriTracksData[globalID]+delta;
+		updatedTracksData[globalID*3] = oriTracksData[globalID*3]+delta.x;
+		updatedTracksData[globalID*3+1] = oriTracksData[globalID*3+1]+delta.y;
+		updatedTracksData[globalID*3+2] = oriTracksData[globalID*3+2]+delta.z;
 		//updatedTracksData[globalID] = delta;
+		//debug
+		debugData[globalID*3]=oriTracksData[globalID*3];
+		debugData[globalID*3+1]=oriTracksData[globalID*3+1];
+		debugData[globalID*3+2]=oriTracksData[globalID*3+2];
     }
+
 }
