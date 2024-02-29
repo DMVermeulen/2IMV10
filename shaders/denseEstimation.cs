@@ -2,15 +2,15 @@
 
 layout (local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
 
-layout(binding = 0) buffer voxelCount {
+layout(binding = 1) buffer voxelCount {
     uint voxelCountData[];
 };
 
-layout(binding = 1) buffer denseMap {
+layout(binding = 2) buffer denseMap {
     float denseMapData[];
 };
 
-layout(binding = 4) buffer debug {
+layout(binding = 5) buffer debug {
     uint debugData[];
 };
 
@@ -62,6 +62,7 @@ void main() {
 		}
 		
 		denseMapData[globalID] = dense;
-		//debugData[globalID]=globalID;
+		
+		debugData[globalID]=voxelCountData[globalID];
     }
 }

@@ -22,7 +22,7 @@ std::vector<uint32_t>& Scene::getInstanceIndicies(int insId) {
 
 void Scene::drawAllInstances() {
 	for (Instance& instance : instances) {
-		instance.draw();
+		instance.draw(LINE);
 	}
 }
 
@@ -51,8 +51,8 @@ void Scene::updateMeshNewNTris() {
 
 void Scene::edgeBundling(float p, float radius, int nTris) {
 	for (Instance& instance : instances) {
-		instance.edgeBundling(p,radius,nTris);
-		//instance.edgeBundlingGPU(p, radius, nTris);
+		//instance.edgeBundling(p,radius,nTris);
+		instance.edgeBundlingGPU(p, radius, nTris);
 	}
 }
 

@@ -18,7 +18,7 @@ public:
 	void edgeBundling(float p, float radius, int nTris);
 private:
 	//parameters used to build triangles from streamlines
-	float radius = 0.3f;
+	float radius = 0.1f;
 	int nTris = 3;
 
 	std::vector<Instance> instances;

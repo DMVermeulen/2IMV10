@@ -2,19 +2,19 @@
 
 layout (local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
 
-layout(binding = 1) buffer denseMap {
+layout(binding = 2) buffer denseMap {
     float denseMapData[];
 };
 
-layout(binding = 2) buffer oriTracks {
-    float oriTracksData[];
+layout(binding = 0) buffer oriTubes {
+    float oriTubesData[];
 };
 
-layout(binding = 3) buffer updatedTracks {
-    float updatedTracksData[];
+layout(binding = 4) buffer updatedTubes {
+    float updatedTubesData[];
 };
 
-layout(binding = 4) buffer debug {
+layout(binding = 5) buffer debug {
     float debugData[];
 };
 
@@ -38,7 +38,7 @@ void main() {
 		int R2 = kernelR * kernelR;
 		int kernelWidth = 2 * kernelR + 1;
         vec3 grad = vec3(0);
-		vec3 point = vec3(oriTracksData[globalID*3],oriTracksData[globalID*3+1],oriTracksData[globalID*3+2]);
+		vec3 point = vec3(oriTubesData[globalID*3],oriTubesData[globalID*3+1],oriTubesData[globalID*3+2]);
 		vec3 deltaP = point - aabbMin;
 		int X = int(deltaP.x / voxelUnitSize);
 		int Y = int(deltaP.y / voxelUnitSize);
@@ -80,14 +80,19 @@ void main() {
 			delta = vec3(0);
 		else
 		    delta = kernelR*voxelUnitSize * normalize(grad);
-		updatedTracksData[globalID*3] = oriTracksData[globalID*3]+delta.x;
-		updatedTracksData[globalID*3+1] = oriTracksData[globalID*3+1]+delta.y;
-		updatedTracksData[globalID*3+2] = oriTracksData[globalID*3+2]+delta.z;
+
+		updatedTubesData[globalID*3] = oriTubesData[globalID*3]+delta.x;
+		updatedTubesData[globalID*3+1] = oriTubesData[globalID*3+1]+delta.y;
+		updatedTubesData[globalID*3+2] = oriTubesData[globalID*3+2]+delta.z;
+		
 		//updatedTracksData[globalID] = delta;
 		//debug
-		debugData[globalID*3]=oriTracksData[globalID*3];
-		debugData[globalID*3+1]=oriTracksData[globalID*3+1];
-		debugData[globalID*3+2]=oriTracksData[globalID*3+2];
+		//debugData[globalID*3]=oriTubesData[globalID*3];
+		//debugData[globalID*3+1]=oriTubesData[globalID*3+1];
+		//debugData[globalID*3+2]=oriTubesData[globalID*3+2];
+		debugData[globalID*3]=delta.x;
+		debugData[globalID*3+1]=delta.y;
+		debugData[globalID*3+2]=delta.z;
     }
 
 }

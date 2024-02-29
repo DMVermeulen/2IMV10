@@ -10,6 +10,6 @@ void main() {
 	if(color.x==0)
 	  fragColor = vec4(0,0,0,1.0f);
 	else
-	  fragColor= vec4(1,0,0,1);
-	//fragColor = vec4(normalize(color)*5,1.0);
+	  //fragColor= vec4(1,0,0,1);
+	  fragColor = vec4(normalize(color),1.0);
 }

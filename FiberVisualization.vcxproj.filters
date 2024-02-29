@@ -104,5 +104,8 @@
     <ClInclude Include="ComputeShader.h">
       <Filter>源文件\Shader</Filter>
     </ClInclude>
+    <ClInclude Include="Enums.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

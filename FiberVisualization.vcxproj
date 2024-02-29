@@ -176,6 +176,7 @@
     <ClInclude Include="Application.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="ComputeShader.h" />
+    <ClInclude Include="Enums.h" />
     <ClInclude Include="Instance.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Scene.h" />

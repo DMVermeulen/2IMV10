@@ -150,7 +150,7 @@ void Application::mainLoop() {
 
 void Application::renderUI() {
 		static float cameraSpeed = 0.0f;
-		static float tubeRadius = 0.5f;
+		static float tubeRadius = 0.1f;
 		static float tubeGranularity = 1;
 		static float fiberBundling = 0;
 		static int counter = 0;
@@ -171,8 +171,8 @@ void Application::renderUI() {
 			scene.setNTris(int(8 * tubeGranularity));
 		}
 		if (ImGui::SliderFloat("Fiber bundling", &fiberBundling, 0.0f, 1.0f)) {
-			//scene.edgeBundling(fiberBundling/10,tubeRadius, int(8 * tubeGranularity));
-			scene.edgeBundling(0.1, tubeRadius, int(8 * tubeGranularity));
+			scene.edgeBundling(fiberBundling/15,tubeRadius, int(8 * tubeGranularity));
+			//scene.edgeBundling(0.1, tubeRadius, int(8 * tubeGranularity));
 		}
 		ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
 
