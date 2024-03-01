@@ -13,6 +13,8 @@ Instance::Instance(std::string path, float radius, int nTris)
     ,voxelCountShader("D:/Projects/FiberVisualization/shaders/voxelCount.cs"){
 	loadTracksFromTCK(path);
 	updateTubes(tracks);
+	initLineDirections();
+	initLineNormals();
 
 	//Triangle mode
 	//updateTriangles(radius, nTris);
@@ -110,7 +112,7 @@ std::vector<glm::vec3> Instance::readTCK(const std::string& filename, int offset
 	int count = 0;
 	int debug = 0;
 	trackOffset.push_back(0);
-	int sample = 1;
+	int sample = 20;
 	while (!file.eof()) {
 		float x, y, z;
 		file.read(reinterpret_cast<char*>(&x), sizeof(float));
@@ -170,6 +172,10 @@ void Instance::updateTubes(std::vector<glm::vec3>& currentTracks) {
 	for (int i = 0; i < trackOffset.size(); i++) {
 		for (int j = trackOffset[i]; j < trackOffset[i]+trackSize[i]-1; j++) {
 			tubes.push_back(Tube{ currentTracks[j] ,currentTracks[j + 1], });
+			if (j == trackOffset[i] + trackSize[i] - 2)
+				isLastTube.push_back(1);
+			else
+				isLastTube.push_back(0);
 		}
 	}
 }
@@ -252,6 +258,7 @@ void Instance::draw(RenderMode mode) {
 	}
 	else if (mode == LINE) {
 		glBindVertexArray(VAOLines);
+		glLineWidth(1.0f);
 		glDrawArrays(GL_LINES, 0, 2*tubes.size());
 	}
 	glBindVertexArray(0);
@@ -712,6 +719,8 @@ void Instance::initVertexBufferLineMode() {
 	}
 	glGenVertexArrays(1, &VAOLines);
 	glGenBuffers(1, &VBOLines);
+	glGenBuffers(1, &NBOLines);
+	glGenBuffers(1, &DBOLines);
 
 	glBindVertexArray(VAOLines);
 	glBindBuffer(GL_ARRAY_BUFFER, VBOLines);
@@ -719,5 +728,38 @@ void Instance::initVertexBufferLineMode() {
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
 	glEnableVertexAttribArray(0);
 
+	glBindBuffer(GL_ARRAY_BUFFER, NBOLines);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * normals.size(), normals.data(), GL_STATIC_DRAW);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(1);
+
+	glBindBuffer(GL_ARRAY_BUFFER, DBOLines);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * directions.size(), directions.data(), GL_STATIC_DRAW);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(2);
+
 	glBindVertexArray(0);
+}
+
+void Instance::initLineNormals() {
+	for (int i = 0; i < tubes.size(); i++) {
+		glm::vec3 vec;
+		if (isLastTube[i])
+			vec = glm::vec3(0, 0, 1);
+		else
+			vec = directions[2*(i + 1)];
+		glm::vec3 left = glm::cross(vec, directions[2*i]);
+		//glm::vec3 normal = glm::normalize(glm::cross(directions[i], left));
+		glm::vec3 normal = glm::normalize(glm::cross(directions[2*i], left));
+		normals.push_back(normal);
+		normals.push_back(normal);
+	}
+}
+
+void Instance::initLineDirections() {
+	for (int i = 0; i < tubes.size(); i++) {
+		glm::vec3 dir = glm::normalize(tubes[i].p2 - tubes[i].p1);
+		directions.push_back(dir);
+		directions.push_back(dir);
+	}
 }

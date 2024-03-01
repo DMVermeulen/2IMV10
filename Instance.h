@@ -28,8 +28,12 @@ private:
 	std::vector<uint32_t> trackOffset;
 	std::vector<uint32_t> trackSize;
 	std::vector<Tube>tubes;            //persistently store this for recreating meshes when parameter changes
+	std::vector<bool>isLastTube;        //store for each tube whether it is the last one of some fiber
 	std::vector<Vertex>vertices;
 	std::vector<uint32_t>indices;
+	std::vector<glm::vec3> normals;     //normal vectors for each vertex, as a vertex attribute
+	std::vector<glm::vec3> directions;  //directions for each vertex, as a vertex attribute
+
 	bool visible=true;
 	GLuint VAO = -1;
 	GLuint VBO = -1;
@@ -38,11 +42,15 @@ private:
 	//For line mode drawing
 	GLuint VAOLines = -1;   
 	GLuint VBOLines = -1;   
+	GLuint NBOLines = -1;   //lineNormal
+	GLuint DBOLines = -1;   //lineDirection
 	
 	//std::vector<Vertex>verticesLineMode;
 
 	void loadTracksFromTCK(std::string path);
 	void updateTubes(std::vector<glm::vec3>& currentTracks);
+	void initLineNormals();
+	void initLineDirections();
 	void updateTriangles(float radius, int nTris);
 	void updateVertexIndiceBuffer();
 	std::vector<glm::vec3> readTCK(const std::string& filename, int offset);
@@ -55,7 +63,7 @@ private:
 	float voxelUnitSize;
 	int totalVoxels;
 	AABB aabb;   //bounding box for the instance
-	const int nIters = 5;  //number of iterations for edge bundling
+	const int nIters = 3;  //number of iterations for edge bundling
 	std::vector<uint32_t> voxelAssignment; //persistently stored
 	std::vector<uint32_t> voxelOffset; 
 	std::vector<uint32_t> voxelSize; 

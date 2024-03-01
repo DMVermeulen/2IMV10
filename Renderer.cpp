@@ -1,6 +1,7 @@
 #include"Renderer.h"
 #include<iostream>
 #include"glm/gtc/matrix_transform.hpp"
+#include <random>
 
 Renderer::Renderer() {
 
@@ -23,12 +24,18 @@ void Renderer::init() {
 		);
 
 	lightPassShader = std::unique_ptr< Shader >(new Shader(
-		"D:/Projects/FiberVisualization/shaders/lightPassVertex.glsl",
+		"D:/Projects/FiberVisualization/shaders/fullQuad.glsl",
 		"D:/Projects/FiberVisualization/shaders/lightPassFragment.glsl")
+		);
+
+	ssaoPassShader = std::unique_ptr< Shader >(new Shader(
+		"D:/Projects/FiberVisualization/shaders/fullQuad.glsl",
+		"D:/Projects/FiberVisualization/shaders/ssaoPassFragment.glsl")
 		);
 	//init objects for all render passes
 	initGeoPassObjects();
 	initShadingPassObjects();
+	initSSAOPassObjects();
 	initPostPassObjects();
 	createQuadObjects();
 }
@@ -49,6 +56,7 @@ void Renderer::setViewportSize(int width, int height) {
 void Renderer::renderFrame() {
 	geometryPass();
 	shadingPass();
+	ssaoPass();
 	postProcessingPass();
 }
 
@@ -57,7 +65,7 @@ void Renderer::initGeoPassObjects() {
 	glGenFramebuffers(1, &gBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
 
-	//bind texture gPos that will be written by geopass
+	//bind textures that will be written by geopass
 	glGenTextures(1, &gPos);
 	glBindTexture(GL_TEXTURE_2D, gPos);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
@@ -65,8 +73,22 @@ void Renderer::initGeoPassObjects() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPos, 0);
 
-	GLuint attachments[1] = { GL_COLOR_ATTACHMENT0};
-	glDrawBuffers(1, attachments);
+	glGenTextures(1, &gNormal);
+	glBindTexture(GL_TEXTURE_2D, gNormal);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
+
+	glGenTextures(1, &gDir);
+	glBindTexture(GL_TEXTURE_2D, gDir);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gDir, 0);
+
+	GLuint attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+	glDrawBuffers(3, attachments);
 
 	//bind depth map for depth testing
 	glGenRenderbuffers(1, &depthMap);
@@ -126,7 +148,65 @@ void Renderer::createQuadObjects() {
 }
 
 void Renderer::initShadingPassObjects() {
+	glGenFramebuffers(1, &framebufferShadingPass);
+	glBindFramebuffer(GL_FRAMEBUFFER, framebufferShadingPass);
 
+	glGenTextures(1, &colorBufferShadingPass);
+	glBindTexture(GL_TEXTURE_2D, colorBufferShadingPass);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBufferShadingPass, 0);
+
+	GLuint attachments[1] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, attachments);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "shading Framebuffer not complete!" << std::endl;
+}
+
+void Renderer::initSSAOPassObjects() {
+	// generate sample kernel for SSAO
+	std::uniform_real_distribution<GLfloat> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
+	std::default_random_engine generator;
+	for (unsigned int i = 0; i < 64; ++i)
+	{
+		glm::vec3 sample(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, randomFloats(generator));
+		sample = glm::normalize(sample);
+		sample *= randomFloats(generator);
+		float scale = float(i) / 64.0f;
+
+		// scale samples s.t. they're more aligned to center of kernel
+		scale = ourLerp(0.1f, 1.0f, scale * scale);
+		sample *= scale;
+		ssaoKernel.push_back(sample);
+		
+		float length = glm::sqrt(glm::dot(sample, sample));
+	}
+
+	//generate random vectors for sampling in SSAO pass
+	std::vector<glm::vec3> ssaoNoise;
+	for (unsigned int i = 0; i < 16; i++)
+	{
+		glm::vec3 noise(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, 0.0f); // rotate around z-axis (in tangent space)
+		ssaoNoise.push_back(noise);
+	}
+	unsigned int noiseTexture; glGenTextures(1, &noiseTexture);
+	glBindTexture(GL_TEXTURE_2D, noiseTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	//set texture location for samplers
+	ssaoPassShader->enable();
+	ssaoPassShader->setInt("shadedColor", 0);
+	ssaoPassShader->setInt("gPosition", 1);
+	ssaoPassShader->setInt("gNormal", 2);
+	ssaoPassShader->setInt("gDir", 3);
+	ssaoPassShader->setInt("texNoise", 4);
+	ssaoPassShader->disable();
 }
 
 void Renderer::initPostPassObjects() {
@@ -154,6 +234,8 @@ void Renderer::geometryPass() {
 
 void Renderer::shadingPass() {
 	glDisable(GL_DEPTH_TEST);
+	// select framebuffer as render target
+	glBindFramebuffer(GL_FRAMEBUFFER, framebufferShadingPass);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	lightPassShader->enable();
 
@@ -161,14 +243,68 @@ void Renderer::shadingPass() {
 	glBindTexture(GL_TEXTURE_2D, gPos);
 	glUniform1i(glGetUniformLocation(lightPassShader->getProgramId(), "worldPos"), 0);
 
-	glBindVertexArray(quadVAO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIBO);
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, gDir);
+	glUniform1i(glGetUniformLocation(lightPassShader->getProgramId(), "gDir"), 1);
 
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, gNormal);
+	glUniform1i(glGetUniformLocation(lightPassShader->getProgramId(), "gNormal"), 2);
+
+	lightPassShader->setVec3("viewPos",camera->Position);
+
+	renderQuad();
+
+	glBindVertexArray(0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	lightPassShader->disable();
 }
 
-void Renderer::postProcessingPass() {
+void Renderer::ssaoPass() {
+	glDisable(GL_DEPTH_TEST);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	ssaoPassShader->enable();
 
+	//textures to sample from
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, colorBufferShadingPass);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, gPos);
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, gNormal);
+
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, gDir);
+		
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, noiseTexture); 
+
+	//set uniforms
+	for (unsigned int i = 0; i < 64; ++i)
+		ssaoPassShader->setVec3("samples[" + std::to_string(i) + "]", ssaoKernel[i]);
+	glm::mat4 proj = glm::perspective(glm::radians(camera->Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 500.0f);
+	glm::mat4 view = camera->GetViewMatrix();
+	ssaoPassShader->setMat4("view",view);
+	ssaoPassShader->setMat4("proj", proj);
+
+	renderQuad();
+
+	glBindVertexArray(0);
+	ssaoPassShader->disable();
+}
+
+void Renderer::postProcessingPass() {
+}
+
+void Renderer::renderQuad() {
+	glBindVertexArray(quadVAO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIBO);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+}
+
+float Renderer::ourLerp(float a, float b, float f)
+{
+	return a + f * (b - a);
 }

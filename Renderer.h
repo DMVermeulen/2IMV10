@@ -22,22 +22,39 @@ private:
 
 	void initGeoPassObjects();
 	void initShadingPassObjects();
+	void initSSAOPassObjects();
 	void initPostPassObjects();
 
 	void geometryPass();
 	void shadingPass();
+	void ssaoPass();
 	void postProcessingPass();
+	void renderQuad();
+
+	//helper functions
+	float ourLerp(float a, float b, float f);
 
 	//OpenGL related 
 	//For geometry pass
 	GLuint gBuffer;
-	GLuint gPos; //produced by geometryPass, can be extended to more
+	GLuint gPos;           
+	GLuint gNormal;
+	GLuint gDir;
 	GLuint depthMap;
 	std::unique_ptr<Shader> geoPassShader;
 
-	//For shading pass
+	//For quad drawing
 	GLuint quadVAO, quadVBO, quadIBO, quadTex;
+
+	//For shading pass
+	GLuint framebufferShadingPass;
+	GLuint colorBufferShadingPass;
 	std::unique_ptr<Shader> lightPassShader;
+
+	//For SSAO pass
+	std::vector<glm::vec3> ssaoKernel;
+	GLuint noiseTexture;
+	std::unique_ptr<Shader> ssaoPassShader;
 
 	//For postProcessing pass
 

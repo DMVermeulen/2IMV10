@@ -4,12 +4,30 @@ in vec2 UV;
 out vec4 fragColor;
 
 uniform sampler2D worldPos;
+uniform sampler2D gDir;
+uniform sampler2D gNormal;
+
+uniform vec3 viewPos;
+
+const vec3 lightPos=vec3(0,0,100);
 
 void main() {
-    vec3 color = texture(worldPos,UV).rgb;
-	if(color.x==0)
-	  fragColor = vec4(0,0,0,1.0f);
-	else
-	  //fragColor= vec4(1,0,0,1);
-	  fragColor = vec4(normalize(color),1.0);
+	vec3 fragPos = texture(worldPos, UV).rgb;
+	vec3 normal = texture(gNormal, UV).rgb;
+	//vec3 normal = vec3(0,0,1);
+	vec3 dir = texture(gDir,UV).xyz;
+	vec3 albedo = normalize(abs(dir));
+	
+	//Phong shading
+	vec3 V = normalize(viewPos-fragPos);
+	vec3 L = normalize(lightPos-fragPos);
+	vec3 H = normalize(L+V);
+
+	float diffuse = max( dot( H, normal ), 0.0f );
+
+	float specular = pow( max( dot( H, normal ), 0.0f ), 64.0f );
+	//specular = max(specular,0);
+
+	//fragColor = vec4(2*(diffuse + specular)*albedo,1.0);
+	fragColor = vec4(albedo,1.0);
 }
