@@ -17,7 +17,7 @@ public:
 	std::vector<Vertex>& getVertices();
 	std::vector<uint32_t>& getIndices();
 	void setVisible(bool visible);
-	void draw(RenderMode mode);
+	void drawLineMode(float lineWidth);
 	void recreateMeshNewRadius(float radius, int nTris);
 	void recreateMeshNewNTris(float radius, int nTris);
 	void edgeBundling(float p, float radius, int nTris);
@@ -28,7 +28,7 @@ private:
 	std::vector<uint32_t> trackOffset;
 	std::vector<uint32_t> trackSize;
 	std::vector<Tube>tubes;            //persistently store this for recreating meshes when parameter changes
-	std::vector<bool>isLastTube;        //store for each tube whether it is the last one of some fiber
+	std::vector<int>isFiberEndpoint;        //store for each vertex whether it is an endpoint of some fiber
 	std::vector<Vertex>vertices;
 	std::vector<uint32_t>indices;
 	std::vector<glm::vec3> normals;     //normal vectors for each vertex, as a vertex attribute
@@ -57,13 +57,16 @@ private:
 	void initVertexBufferLineMode();
 
 	//edge-bundling related structures on host 
-	const uint32_t nVoxels_Z = 100;
+	const uint32_t nVoxels_Z = 150;
 	uint32_t nVoxels_X;
 	uint32_t nVoxels_Y;
 	float voxelUnitSize;
 	int totalVoxels;
 	AABB aabb;   //bounding box for the instance
-	const int nIters = 3;  //number of iterations for edge bundling
+	const int nIters = 5;  //number of iterations for edge bundling
+	const float smoothFactor = 0; 
+	float smoothL;
+	const float relaxFactor = 0.4;
 	std::vector<uint32_t> voxelAssignment; //persistently stored
 	std::vector<uint32_t> voxelOffset; 
 	std::vector<uint32_t> voxelSize; 
@@ -76,15 +79,17 @@ private:
 
 	//Compute shaders to accelerate edge bundling 
 	ComputeShader voxelCountShader;
-	//ComputeShader voxelCountEndpointsShader;
 	ComputeShader denseEstimationShader;
 	ComputeShader advectionShader;
+	ComputeShader smoothShader;
+	ComputeShader relaxShader;
 
 	//GPU passes for edge bundling
 	void voxelCountPass();
 	void denseEstimationPass(float p);
-	//std::vector<glm::vec3> advectionPass(float p);
 	void advectionPass(float p);
+	void smoothPass(float smoothFactor);
+	void relaxationPass();
 	
 	//helper functions
 	void transferDataGPU(GLuint srcBuffer, GLuint dstBuffer, size_t copySize);
@@ -99,6 +104,9 @@ private:
 	GLuint debugFLOAT;
 	GLuint texTempTubes;
 	GLuint texUpdatedTubes;
+	GLuint texSmoothedTubes;
+	GLuint texRelaxedTubes;
+	GLuint texIsFiberEndpoint;
 
 	void initTextures();
 

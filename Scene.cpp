@@ -20,9 +20,9 @@ std::vector<uint32_t>& Scene::getInstanceIndicies(int insId) {
 	return instances.at(insId).getIndices();
 }
 
-void Scene::drawAllInstances() {
+void Scene::drawAllInstancesLineMode(float lineWidth) {
 	for (Instance& instance : instances) {
-		instance.draw(LINE);
+		instance.drawLineMode(lineWidth);
 	}
 }
 

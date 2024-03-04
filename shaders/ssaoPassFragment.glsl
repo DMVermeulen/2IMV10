@@ -11,10 +11,12 @@ uniform sampler2D gDir;
 uniform sampler2D texNoise;
 
 uniform vec3 samples[64];
+uniform float radius;
+uniform float colorInterval;
 
 // parameters (you'd probably want to use them as uniforms to more easily tweak the effect)
 int kernelSize = 64;
-float radius = 10;
+//float radius = 10;
 float bias = 0.025;
 
 // tile noise texture over screen based on screen dimensions divided by noise size
@@ -80,4 +82,17 @@ void main()
 	//FragColor = vec4(texture(shadedColor,UV).xyz, 1.0f);
 	//FragColor = vec4(occlusion, 1.0f);
 	//FragColor = vec4(randomVec, 1.0f);
+	
+	
+	
+	//color flattening
+	if(colorInterval>1e-4 && FragColor.x>0){
+	   	int coord_X = int(FragColor.x/colorInterval);
+	    int coord_Y = int(FragColor.y/colorInterval);
+	    int coord_Z = int(FragColor.z/colorInterval);
+	    vec3 coord = vec3(coord_X,coord_Y,coord_Z);
+		vec3 extra = 0.5*vec3(colorInterval,colorInterval,colorInterval);
+	    FragColor = vec4(colorInterval*coord+extra,1.0f);
+	}
+
 }

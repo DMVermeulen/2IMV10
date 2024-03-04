@@ -153,6 +153,9 @@ void Application::renderUI() {
 		static float tubeRadius = 0.1f;
 		static float tubeGranularity = 1;
 		static float fiberBundling = 0;
+		static float lineWidth = 0.1f;
+		static float ssao = 0.2f;
+		static float colorInterval = 0;
 		static int counter = 0;
 
 		ImGui::Begin("Settings");                          // Create a window called "Hello, world!" and append into it.
@@ -164,15 +167,24 @@ void Application::renderUI() {
 		if (ImGui::SliderFloat("camera speed", &cameraSpeed, 0.0f, 200.0f)) {
 			camera.setSpeed(cameraSpeed);
 		}
-		if (ImGui::SliderFloat("tube size", &tubeRadius, 0.0f, 10.0f)) {
-			scene.setRadius(tubeRadius);
-		}
-		if (ImGui::SliderFloat("tube granularity", &tubeGranularity, 0.0f, 1.0f)) {
-			scene.setNTris(int(8 * tubeGranularity));
-		}
+		//if (ImGui::SliderFloat("tube size", &tubeRadius, 0.0f, 10.0f)) {
+		//	scene.setRadius(tubeRadius);
+		//}
+		//if (ImGui::SliderFloat("tube granularity", &tubeGranularity, 0.0f, 1.0f)) {
+		//	scene.setNTris(int(8 * tubeGranularity));
+		//}
 		if (ImGui::SliderFloat("Fiber bundling", &fiberBundling, 0.0f, 1.0f)) {
-			scene.edgeBundling(fiberBundling/15,tubeRadius, int(8 * tubeGranularity));
+			scene.edgeBundling(fiberBundling/25,tubeRadius, int(8 * tubeGranularity));
 			//scene.edgeBundling(0.1, tubeRadius, int(8 * tubeGranularity));
+		}
+		if (ImGui::SliderFloat("Line width", &lineWidth, 0.0f, 1.0f)) {
+			renderer.setLineWidth(lineWidth*10);
+		}
+		if (ImGui::SliderFloat("SSAO", &ssao, 0.0f, 1.0f)) {
+			renderer.setSSAORadius(ssao*50);
+		}
+		if (ImGui::SliderFloat("Color flattening", &colorInterval, 0.0f, 1.0f)) {
+			renderer.setColorFlattening(colorInterval/2);
 		}
 		ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
 

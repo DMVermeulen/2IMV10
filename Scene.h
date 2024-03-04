@@ -12,7 +12,7 @@ public:
 	void removeInstance(int insId);
 	std::vector<Vertex>& getInstanceVertices(int instId);
 	std::vector<uint32_t>& getInstanceIndicies(int instId);
-	void drawAllInstances();
+	void drawAllInstancesLineMode(float lineWidth);
 	void setRadius(float r);
 	void setNTris(int n);
 	void edgeBundling(float p, float radius, int nTris);

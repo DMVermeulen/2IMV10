@@ -14,6 +14,9 @@ public:
 	void setCamera(Camera* camera);
 	void setViewportSize(int width, int height);
 	void init();
+	void setLineWidth(float lineWidth);
+	void setSSAORadius(float R);
+	void setColorFlattening(float colorInterval);
 private:
 	Scene* scene = nullptr; 
 	Camera* camera = nullptr;
@@ -60,6 +63,11 @@ private:
 
 	//viewport size
 	GLuint width, height;
+
+	//UI parameters
+	float ssaoRadius=10;
+	float lineWidth = 1.0f;
+	float colorInterval = 0;
 
 	//commonly used helper function (may moved to class RenderPassBase)
 	void createQuadObjects();

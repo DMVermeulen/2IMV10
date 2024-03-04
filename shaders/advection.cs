@@ -79,7 +79,7 @@ void main() {
 		if (dot(grad, grad) < 1e-5)
 			delta = vec3(0);
 		else
-		    delta = kernelR*voxelUnitSize * normalize(grad);
+		    delta = kernelR*voxelUnitSize * normalize(grad)/1.5;
 
 		updatedTubesData[globalID*3] = oriTubesData[globalID*3]+delta.x;
 		updatedTubesData[globalID*3+1] = oriTubesData[globalID*3+1]+delta.y;

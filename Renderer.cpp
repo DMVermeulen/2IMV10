@@ -225,7 +225,7 @@ void Renderer::geometryPass() {
 	glm::mat4 view = camera->GetViewMatrix();
 	glUniformMatrix4fv(glGetUniformLocation(geoPassShader->getProgramId(), "view"), 1, GL_FALSE, &view[0][0]);
 
-	scene->drawAllInstances(); //scene will submit the drawing commands for each instance 
+	scene->drawAllInstancesLineMode(lineWidth); //scene will submit the drawing commands for each instance 
 
 	glBindVertexArray(0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -286,6 +286,8 @@ void Renderer::ssaoPass() {
 		ssaoPassShader->setVec3("samples[" + std::to_string(i) + "]", ssaoKernel[i]);
 	glm::mat4 proj = glm::perspective(glm::radians(camera->Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 500.0f);
 	glm::mat4 view = camera->GetViewMatrix();
+	ssaoPassShader->setFloat("colorInterval", colorInterval);
+	ssaoPassShader->setFloat("radius", ssaoRadius);
 	ssaoPassShader->setMat4("view",view);
 	ssaoPassShader->setMat4("proj", proj);
 
@@ -307,4 +309,16 @@ void Renderer::renderQuad() {
 float Renderer::ourLerp(float a, float b, float f)
 {
 	return a + f * (b - a);
+}
+
+void Renderer::setSSAORadius(float R) {
+	ssaoRadius = R;
+}
+
+void Renderer::setLineWidth(float _lineWidth) {
+	lineWidth = _lineWidth;
+}
+
+void Renderer::setColorFlattening(float _colorInterval) {
+	colorInterval = _colorInterval;
 }
