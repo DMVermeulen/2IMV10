@@ -17,6 +17,7 @@ public:
 	void setLineWidth(float lineWidth);
 	void setSSAORadius(float R);
 	void setColorFlattening(float colorInterval);
+	void setContrast(float contrast);
 private:
 	Scene* scene = nullptr; 
 	Camera* camera = nullptr;
@@ -27,12 +28,14 @@ private:
 	void initShadingPassObjects();
 	void initSSAOPassObjects();
 	void initPostPassObjects();
+	void initTexVisPassObjects();
 
 	void geometryPass();
 	void shadingPass();
 	void ssaoPass();
 	void postProcessingPass();
 	void renderQuad();
+	void textureVisPass();
 
 	//helper functions
 	float ourLerp(float a, float b, float f);
@@ -57,9 +60,15 @@ private:
 	//For SSAO pass
 	std::vector<glm::vec3> ssaoKernel;
 	GLuint noiseTexture;
+	GLuint framebufferSSAOPass;
+	GLuint colorBufferSSAOPass;
 	std::unique_ptr<Shader> ssaoPassShader;
 
 	//For postProcessing pass
+	std::unique_ptr<Shader> postPassShader;
+
+	//For texture visualization pass
+	std::unique_ptr<Shader> texVisPassShader;
 
 	//viewport size
 	GLuint width, height;
@@ -68,6 +77,7 @@ private:
 	float ssaoRadius=10;
 	float lineWidth = 1.0f;
 	float colorInterval = 0;
+	float contrast = 1.0f;
 
 	//commonly used helper function (may moved to class RenderPassBase)
 	void createQuadObjects();

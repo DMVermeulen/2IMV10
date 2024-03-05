@@ -14,6 +14,10 @@ layout(binding = 4) buffer updatedTubes {
     float updatedTubesData[];
 };
 
+layout(binding = 9) buffer tempNormals {
+    float tempNormalsData[];
+};
+
 layout(binding = 5) buffer debug {
     float debugData[];
 };
@@ -32,7 +36,7 @@ uniform int totalVoxels;
 void main() {
     // Get global thread ID
     int globalID = int(gl_GlobalInvocationID.x);
-
+	float diff = 0;
     // Check if global ID is within the valid range of the buffer
     if (globalID < totalSize) {
 		int R2 = kernelR * kernelR;
@@ -70,16 +74,25 @@ void main() {
 					indexB = min(indexB, totalVoxels);
 					float diffDense = denseMapData[indexB] - denseMapData[indexA];
 
-					grad += normalize(dir)*diffDense*exp(-diffPos);
+					//grad += normalize(dir)*diffDense*exp(-diffPos);
+					//debug
+					if(diffDense>diff){
+						grad = normalize(dir)*diffDense*exp(-diffPos);
+						diff = diffDense;
+					}
 				}
 			}
 		}
-		grad = grad/float(kernelWidth * kernelWidth*kernelWidth);
+		//grad = grad/float(kernelWidth * kernelWidth*kernelWidth);
 		vec3 delta;
 		if (dot(grad, grad) < 1e-5)
 			delta = vec3(0);
 		else
 		    delta = kernelR*voxelUnitSize * normalize(grad)/1.5;
+		
+		//project grad to normal vector
+		vec3 normal = vec3(tempNormalsData[globalID*3],tempNormalsData[globalID*3+1],tempNormalsData[globalID*3+2]);
+		delta = dot(normal,grad)*normal;
 
 		updatedTubesData[globalID*3] = oriTubesData[globalID*3]+delta.x;
 		updatedTubesData[globalID*3+1] = oriTubesData[globalID*3+1]+delta.y;

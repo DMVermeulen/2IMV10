@@ -12,8 +12,11 @@ Instance::Instance(std::string path, float radius, int nTris)
 	,advectionShader("D:/Projects/FiberVisualization/shaders/advection.cs")
     ,voxelCountShader("D:/Projects/FiberVisualization/shaders/voxelCount.cs")
     ,smoothShader("D:/Projects/FiberVisualization/shaders/smooth.cs")
-	, relaxShader("D:/Projects/FiberVisualization/shaders/relaxation.cs") {
+	, relaxShader("D:/Projects/FiberVisualization/shaders/relaxation.cs") 
+	, updateDirectionShader("D:/Projects/FiberVisualization/shaders/updateDirections.cs") 
+	, updateNormalShader("D:/Projects/FiberVisualization/shaders/updateNormals.cs") {
 	loadTracksFromTCK(path);
+	trackResampling();
 	updateTubes(tracks);
 	initLineDirections();
 	initLineNormals();
@@ -69,6 +72,26 @@ void Instance::initTextures() {
 	glBindBuffer(GL_TEXTURE_BUFFER, texRelaxedTubes);
 	glBufferData(GL_TEXTURE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
 
+	//temp normals
+	glGenBuffers(1, &texTempNormals);
+	glBindBuffer(GL_TEXTURE_BUFFER, texTempNormals);
+	glBufferData(GL_TEXTURE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
+
+	//updated normals
+	glGenBuffers(1, &texUpdatedNormals);
+	glBindBuffer(GL_TEXTURE_BUFFER, texUpdatedNormals);
+	glBufferData(GL_TEXTURE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
+
+	//temp directions
+	glGenBuffers(1, &texTempDirections);
+	glBindBuffer(GL_TEXTURE_BUFFER, texTempDirections);
+	glBufferData(GL_TEXTURE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
+
+	//updated directions
+	glGenBuffers(1, &texUpdatedDirections);
+	glBindBuffer(GL_TEXTURE_BUFFER, texUpdatedDirections);
+	glBufferData(GL_TEXTURE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
+
 	//voxelCount (1-D buffer)
 	glGenBuffers(1, &texVoxelCount);
 	glBindBuffer(GL_TEXTURE_BUFFER, texVoxelCount);
@@ -114,11 +137,26 @@ std::vector<uint32_t>& Instance::getIndices() {
 	return indices;
 }
 
-std::vector<glm::vec3> Instance::readTCK(const std::string& filename, int offset) {
+std::vector<glm::vec3> Instance::readTCK(const std::string& filename) {
 	std::ifstream file(filename, std::ios::binary);
 	// Read track data from file
 	if (!file.is_open()) {
 		std::runtime_error("failed to opening file!");
+	}
+
+	// Read the offset
+	int offset = 0;
+	bool found = false;
+	std::string line;
+	while (std::getline(file, line)) {
+		std::istringstream iss(line);
+		std::string field;
+		if (iss >> field && field == "file:") {
+			if (iss >> field && iss >> offset) {
+				found = true;
+				break;
+			}
+		}
 	}
 
 	// Seek to the specified offset
@@ -129,7 +167,8 @@ std::vector<glm::vec3> Instance::readTCK(const std::string& filename, int offset
 	int count = 0;
 	int debug = 0;
 	trackOffset.push_back(0);
-	int sample = 20;
+	int sample = 10;
+	glm::vec3 center(0);
 	while (!file.eof()) {
 		float x, y, z;
 		file.read(reinterpret_cast<char*>(&x), sizeof(float));
@@ -142,7 +181,7 @@ std::vector<glm::vec3> Instance::readTCK(const std::string& filename, int offset
 				debug++;
 				continue;
 			}
-			if (0!=count) {
+			if (0 != count) {
 				//tracks.push_back(currentStreamline);
 				//currentStreamline.clear();
 				trackOffset.push_back(nowTracks.size());
@@ -163,21 +202,54 @@ std::vector<glm::vec3> Instance::readTCK(const std::string& filename, int offset
 			}
 			count++;
 			nowTracks.push_back(glm::vec3(x, y, z));
+			center += glm::vec3(x, y, z);
 		}
 	}
 	trackOffset.pop_back();
 	file.close();
+
+	center /= nowTracks.size();
+	center += glm::vec3(0);
+	//transform the model to world center
+	for (int i = 0; i < nowTracks.size();i++) {
+		nowTracks[i] -= center;
+	}
+	center = glm::vec3(0);
+	for (glm::vec3 &point : nowTracks) {
+		center += point;
+	}
+	center /= nowTracks.size();
 	return nowTracks;
 }
 
 //Input: file
 //Output: tracks
 void Instance::loadTracksFromTCK(std::string path) {
-	//load data from tck
-	//std::string filename = "C:\\Users\\zzc_c\\Downloads\\whole_brain.tck"; 
-	int OFFSET = 107;
-	int count = 144000;
-	tracks = readTCK(path, OFFSET);
+	tracks = readTCK(path);
+}
+
+void Instance::trackResampling() {
+	std::vector<float>aveLength;
+	for (int i = 0; i < trackOffset.size(); i++) {
+		float sum = 0;
+		for (int j = trackOffset[i]; j < trackOffset[i] + trackSize[i]-1; j++) {
+			float leng = glm::dot(tracks[j] - tracks[j + 1], tracks[j] - tracks[j + 1]);
+			sum += sqrt(leng);
+		}
+		sum /= trackSize[i];
+		aveLength.push_back(sum);
+	}
+	
+	std::vector<glm::vec3>resampledTracks;
+	for (int i = 0; i < trackOffset.size(); i++) {
+		resampledTracks.push_back(tracks[trackOffset[i]]);
+		for (int j = trackOffset[i]+1; j < trackOffset[i] + trackSize[i]; j++) {
+			glm::vec3 dir = glm::normalize(tracks[j] - tracks[j-1]);
+			glm::vec3 newPoint = resampledTracks[j - 1] + aveLength[i]*dir;
+			resampledTracks.push_back(newPoint);
+		}
+	}
+	tracks = resampledTracks;
 }
 
 //Recreate tubes from new tracks
@@ -188,7 +260,8 @@ void Instance::updateTubes(std::vector<glm::vec3>& currentTracks) {
 	int offset = 0;
 	for (int i = 0; i < trackOffset.size(); i++) {
 		for (int j = trackOffset[i]; j < trackOffset[i]+trackSize[i]-1; j++) {
-			tubes.push_back(Tube{ currentTracks[j] ,currentTracks[j + 1], });
+			tubes.push_back(Tube{ currentTracks[j] ,currentTracks[j + 1]});
+			float leng = glm::dot(currentTracks[j] - currentTracks[j + 1], currentTracks[j] - currentTracks[j + 1]);
 			if (j == trackOffset[i]) {
 				isFiberEndpoint.push_back(1);
 			}
@@ -580,9 +653,17 @@ std::vector<glm::vec3> Instance::smoothing(std::vector<glm::vec3>& newTracks) {
 
 void Instance::edgeBundlingGPU(float p, float radius, int nTris) {
 	//repeat bundling for several iterations
-    //init texTempTubes with tubes
+
+    //init texTempTubes with originaltubes
 	glBindBuffer(GL_TEXTURE_BUFFER, texTempTubes);
 	glBufferData(GL_TEXTURE_BUFFER, tubes.size() * 6 * sizeof(float), tubes.data(), GL_STATIC_DRAW);
+	//init texTempNormals with original normals
+	glBindBuffer(GL_TEXTURE_BUFFER, texTempNormals);
+	glBufferData(GL_TEXTURE_BUFFER, tubes.size() * 6 * sizeof(float), normals.data(), GL_STATIC_DRAW);
+	//init texTempNormals with original directions
+	glBindBuffer(GL_TEXTURE_BUFFER, texTempDirections);
+	glBufferData(GL_TEXTURE_BUFFER, tubes.size() * 6 * sizeof(float), directions.data(), GL_STATIC_DRAW);
+
 	for (int i = 0; i < nIters; i++) {
 		//clear voxelCount at the beginning of each iteration
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, texVoxelCount);
@@ -594,6 +675,8 @@ void Instance::edgeBundlingGPU(float p, float radius, int nTris) {
 		advectionPass(p);
 		smoothPass(p);
 		transferDataGPU(texSmoothedTubes, texTempTubes, tubes.size() * 6 * sizeof(float));  //copy data from resulting updated to temp for next iteration
+		transferDataGPU(texUpdatedDirections, texTempDirections, tubes.size() * 6 * sizeof(float));
+		transferDataGPU(texUpdatedNormals, texTempNormals, tubes.size() * 6 * sizeof(float));
 	}
 	//re-transfer original tracks to texTempTubes, for relaxation pass
 	glBindBuffer(GL_TEXTURE_BUFFER, texTempTubes);
@@ -601,7 +684,9 @@ void Instance::edgeBundlingGPU(float p, float radius, int nTris) {
 	relaxationPass();
 	//line mode
 	transferDataGPU(texRelaxedTubes, VBOLines, tubes.size() * 6 * sizeof(float));  //copy data from smoothed to Vertex buffer
-	
+	transferDataGPU(texUpdatedDirections, DBOLines, tubes.size() * 6 * sizeof(float)); 
+	transferDataGPU(texUpdatedNormals, NBOLines, tubes.size() * 6 * sizeof(float));  
+
 	//triangle mode
 	//updateTubes(newTracks);
 	//updateTriangles(radius, nTris);
@@ -695,6 +780,7 @@ void Instance::advectionPass(float p) {
 	//set binding buffers for compute pass
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, texUpdatedTubes);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, debugFLOAT);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 9, texTempNormals);
 
 	advectionShader.use();
 	advectionShader.setInt("totalSize", 2*tubes.size());
@@ -741,6 +827,28 @@ void Instance::relaxationPass() {
 	relaxShader.use();
 	relaxShader.setInt("totalSize", 2 * tubes.size());
 	relaxShader.setFloat("relaxFactor", relaxFactor);
+
+	glDispatchCompute(1 + (unsigned int)2 * tubes.size() / 128, 1, 1);
+
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+}
+
+void Instance::updateDirectionPass() {
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 10, texUpdatedDirections);
+
+	updateDirectionShader.use();
+	updateDirectionShader.setInt("totalSize", 2 * tubes.size());
+
+	glDispatchCompute(1 + (unsigned int)2 * tubes.size() / 128, 1, 1);
+
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+}
+
+void Instance::updateNormalPass() {
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 11, texUpdatedNormals);
+
+	updateNormalShader.use();
+	updateNormalShader.setInt("totalSize", 2 * tubes.size());
 
 	glDispatchCompute(1 + (unsigned int)2 * tubes.size() / 128, 1, 1);
 
@@ -808,7 +916,7 @@ void Instance::initLineNormals() {
 
 void Instance::initLineDirections() {
 	for (int i = 0; i < tubes.size(); i++) {
-		glm::vec3 dir = glm::normalize(tubes[i].p2 - tubes[i].p1);
+		glm::vec3 dir = glm::normalize(tubes[i].p1 - tubes[i].p2);
 		directions.push_back(dir);
 		directions.push_back(dir);
 	}

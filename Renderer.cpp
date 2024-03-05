@@ -32,6 +32,15 @@ void Renderer::init() {
 		"D:/Projects/FiberVisualization/shaders/fullQuad.glsl",
 		"D:/Projects/FiberVisualization/shaders/ssaoPassFragment.glsl")
 		);
+	texVisPassShader = std::unique_ptr< Shader >(new Shader(
+		"D:/Projects/FiberVisualization/shaders/fullQuad.glsl",
+		"D:/Projects/FiberVisualization/shaders/texVisPassFragment.glsl")
+		);
+	postPassShader = std::unique_ptr< Shader >(new Shader(
+		"D:/Projects/FiberVisualization/shaders/fullQuad.glsl",
+		"D:/Projects/FiberVisualization/shaders/postPassFragment.glsl")
+		);
+
 	//init objects for all render passes
 	initGeoPassObjects();
 	initShadingPassObjects();
@@ -57,6 +66,7 @@ void Renderer::renderFrame() {
 	geometryPass();
 	shadingPass();
 	ssaoPass();
+	//textureVisPass();
 	postProcessingPass();
 }
 
@@ -166,6 +176,22 @@ void Renderer::initShadingPassObjects() {
 }
 
 void Renderer::initSSAOPassObjects() {
+	glGenFramebuffers(1, &framebufferSSAOPass);
+	glBindFramebuffer(GL_FRAMEBUFFER, framebufferSSAOPass);
+
+	glGenTextures(1, &colorBufferSSAOPass);
+	glBindTexture(GL_TEXTURE_2D, colorBufferSSAOPass);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBufferSSAOPass, 0);
+
+	GLuint attachments[1] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, attachments);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "shading Framebuffer not complete!" << std::endl;
+
 	// generate sample kernel for SSAO
 	std::uniform_real_distribution<GLfloat> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
 	std::default_random_engine generator;
@@ -210,7 +236,16 @@ void Renderer::initSSAOPassObjects() {
 }
 
 void Renderer::initPostPassObjects() {
+	postPassShader->enable();
+	postPassShader->setInt("imageWithAO", 0);
+	postPassShader->disable();
+}
 
+void Renderer::initTexVisPassObjects() {
+	//set texture location for samplers
+	texVisPassShader->enable();
+	texVisPassShader->setInt("sampleTexture", 0);
+	texVisPassShader->disable();
 }
 
 void Renderer::geometryPass() {
@@ -220,12 +255,13 @@ void Renderer::geometryPass() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// pass transformation matrices to shader, remember to enable shader before setting uniform values!!!
 	geoPassShader->enable();
-	glm::mat4 proj = glm::perspective(glm::radians(camera->Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 500.0f);
+	glm::mat4 proj = glm::perspective(glm::radians(camera->Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 1000.0f);
 	glUniformMatrix4fv(glGetUniformLocation(geoPassShader->getProgramId(), "proj"), 1, GL_FALSE, &proj[0][0]);
 	glm::mat4 view = camera->GetViewMatrix();
 	glUniformMatrix4fv(glGetUniformLocation(geoPassShader->getProgramId(), "view"), 1, GL_FALSE, &view[0][0]);
 
-	scene->drawAllInstancesLineMode(lineWidth); //scene will submit the drawing commands for each instance 
+	//scene->drawAllInstancesLineMode(lineWidth); //scene will submit the drawing commands for each instance 
+	scene->drawActivatedInstanceLineMode(lineWidth);
 
 	glBindVertexArray(0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -262,6 +298,7 @@ void Renderer::shadingPass() {
 
 void Renderer::ssaoPass() {
 	glDisable(GL_DEPTH_TEST);
+	glBindFramebuffer(GL_FRAMEBUFFER, framebufferSSAOPass);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	ssaoPassShader->enable();
 
@@ -284,20 +321,57 @@ void Renderer::ssaoPass() {
 	//set uniforms
 	for (unsigned int i = 0; i < 64; ++i)
 		ssaoPassShader->setVec3("samples[" + std::to_string(i) + "]", ssaoKernel[i]);
-	glm::mat4 proj = glm::perspective(glm::radians(camera->Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 500.0f);
+	glm::mat4 proj = glm::perspective(glm::radians(camera->Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 1000.0f);
 	glm::mat4 view = camera->GetViewMatrix();
 	ssaoPassShader->setFloat("colorInterval", colorInterval);
 	ssaoPassShader->setFloat("radius", ssaoRadius);
 	ssaoPassShader->setMat4("view",view);
 	ssaoPassShader->setMat4("proj", proj);
+	ssaoPassShader->setVec3("viewPos", camera->Position);
 
 	renderQuad();
 
 	glBindVertexArray(0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	ssaoPassShader->disable();
 }
 
 void Renderer::postProcessingPass() {
+	glDisable(GL_DEPTH_TEST);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	postPassShader->enable();
+
+	//textures to sample from
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, colorBufferSSAOPass);
+
+	//set uniforms
+	postPassShader->setFloat("contrast", contrast);
+
+	renderQuad();
+
+	glBindVertexArray(0);
+	postPassShader->disable();
+}
+
+void Renderer::textureVisPass() {
+	glDisable(GL_DEPTH_TEST);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	texVisPassShader->enable();
+
+	//glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_2D, gPos);
+
+	//glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_2D, gNormal);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, gDir);
+
+	renderQuad();
+
+	glBindVertexArray(0);
+	texVisPassShader->disable();
 }
 
 void Renderer::renderQuad() {
@@ -321,4 +395,8 @@ void Renderer::setLineWidth(float _lineWidth) {
 
 void Renderer::setColorFlattening(float _colorInterval) {
 	colorInterval = _colorInterval;
+}
+
+void Renderer::setContrast(float _contrast) {
+	contrast = _contrast;
 }

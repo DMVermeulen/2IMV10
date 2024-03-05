@@ -53,8 +53,10 @@ private:
 	void initLineDirections();
 	void updateTriangles(float radius, int nTris);
 	void updateVertexIndiceBuffer();
-	std::vector<glm::vec3> readTCK(const std::string& filename, int offset);
+	std::vector<glm::vec3> readTCK(const std::string& filename);
 	void initVertexBufferLineMode();
+
+	void trackResampling();
 
 	//edge-bundling related structures on host 
 	const uint32_t nVoxels_Z = 150;
@@ -63,10 +65,10 @@ private:
 	float voxelUnitSize;
 	int totalVoxels;
 	AABB aabb;   //bounding box for the instance
-	const int nIters = 5;  //number of iterations for edge bundling
+	const int nIters = 3;  //number of iterations for edge bundling
 	const float smoothFactor = 0; 
 	float smoothL;
-	const float relaxFactor = 0.4;
+	const float relaxFactor = 0.5;
 	std::vector<uint32_t> voxelAssignment; //persistently stored
 	std::vector<uint32_t> voxelOffset; 
 	std::vector<uint32_t> voxelSize; 
@@ -83,6 +85,8 @@ private:
 	ComputeShader advectionShader;
 	ComputeShader smoothShader;
 	ComputeShader relaxShader;
+	ComputeShader updateDirectionShader;
+	ComputeShader updateNormalShader;
 
 	//GPU passes for edge bundling
 	void voxelCountPass();
@@ -90,6 +94,8 @@ private:
 	void advectionPass(float p);
 	void smoothPass(float smoothFactor);
 	void relaxationPass();
+	void updateDirectionPass();
+	void updateNormalPass();
 	
 	//helper functions
 	void transferDataGPU(GLuint srcBuffer, GLuint dstBuffer, size_t copySize);
@@ -107,6 +113,10 @@ private:
 	GLuint texSmoothedTubes;
 	GLuint texRelaxedTubes;
 	GLuint texIsFiberEndpoint;
+	GLuint texTempNormals;
+	GLuint texUpdatedNormals;
+	GLuint texTempDirections;
+	GLuint texUpdatedDirections;
 
 	void initTextures();
 

@@ -27,8 +27,10 @@ void Application::run() {
 }
 
 void Application::initScene() {
-	scene.addInstance("C:\\Users\\zzc_c\\Downloads\\whole_brain.tck"); //init scene with an instance
+	scene.addInstance("C:\\Users\\zzc_c\\Downloads\\whole_brain.tck"); 
+	scene.addInstance("C:\\Users\\zzc_c\\Downloads\\AF_left (1).tck");
 }
+
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -156,6 +158,7 @@ void Application::renderUI() {
 		static float lineWidth = 0.1f;
 		static float ssao = 0.2f;
 		static float colorInterval = 0;
+		static float contrast = 0.5;
 		static int counter = 0;
 
 		ImGui::Begin("Settings");                          // Create a window called "Hello, world!" and append into it.
@@ -163,6 +166,22 @@ void Application::renderUI() {
 		ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
 		ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
 		ImGui::Checkbox("Another Window", &show_another_window);
+
+		//Select an instance to visualize
+		static const char* items[] = { "instance 0 ", "instance 1" };
+		static int currentItem = 1;
+		if (ImGui::BeginCombo("##combo", items[currentItem])) {
+			for (int i = 0; i < IM_ARRAYSIZE(items); i++) {
+				bool isSelected = (currentItem == i);
+				if (ImGui::Selectable(items[i], isSelected)) {
+					currentItem = i;
+					scene.setActivatedInstance(i);
+				}
+				if (isSelected)
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
 
 		if (ImGui::SliderFloat("camera speed", &cameraSpeed, 0.0f, 200.0f)) {
 			camera.setSpeed(cameraSpeed);
@@ -178,10 +197,13 @@ void Application::renderUI() {
 			//scene.edgeBundling(0.1, tubeRadius, int(8 * tubeGranularity));
 		}
 		if (ImGui::SliderFloat("Line width", &lineWidth, 0.0f, 1.0f)) {
-			renderer.setLineWidth(lineWidth*10);
+			renderer.setLineWidth(lineWidth*3);
 		}
 		if (ImGui::SliderFloat("SSAO", &ssao, 0.0f, 1.0f)) {
 			renderer.setSSAORadius(ssao*50);
+		}
+		if (ImGui::SliderFloat("Contrast", &contrast, 0.0f, 1.0f)) {
+			renderer.setContrast(contrast*2);
 		}
 		if (ImGui::SliderFloat("Color flattening", &colorInterval, 0.0f, 1.0f)) {
 			renderer.setColorFlattening(colorInterval/2);

@@ -24,13 +24,17 @@ const vec2 noiseScale = vec2(1280.0/4.0, 720.0/4.0);
 
 uniform mat4 view;
 uniform mat4 proj;
+uniform vec3 viewPos;
 
+const vec3 ambient = vec3(0.03,0.03,0.03);
 
 void main()
 {
     // get input for SSAO algorithm
     vec3 fragPos = texture(gPosition, UV).xyz;
-    vec3 normal = normalize(texture(gNormal, UV).rgb);
+    //vec3 normal = normalize(texture(gNormal, UV).rgb);
+	vec3 dir = texture(gDir, UV).xyz;
+	vec3 normal = normalize(cross(cross(dir,viewPos-fragPos),dir));
     vec3 randomVec = normalize(texture(texNoise, UV * noiseScale).xyz);
 	//vec3 randomVec = normalize(texture(texNoise, UV).xyz);
 	
@@ -75,13 +79,15 @@ void main()
 		float rangeCheck = smoothstep(0.0, 1.0, radius / abs(myDepth - pivotDepth));
         occlusion += (pivotDepth >= myDepth + bias ? 1.0 : 0.0);//* rangeCheck; 		
     }
-	occlusion/=1;
     occlusion = 1.0 - (occlusion / kernelSize);
-
-    FragColor = vec4(occlusion * texture(shadedColor,UV).xyz, 1.0f);
+	if(radius<1e-5)
+	  occlusion = 1.0;
+    FragColor = vec4(occlusion * texture(shadedColor,UV).xyz+ambient, 1.0f);
 	//FragColor = vec4(texture(shadedColor,UV).xyz, 1.0f);
 	//FragColor = vec4(occlusion, 1.0f);
 	//FragColor = vec4(randomVec, 1.0f);
+	//if(texture(shadedColor,UV).x>0)
+	//  FragColor = vec4(occlusion * vec3(1,0,0)+ambient, 1.0f);
 	
 	
 	
@@ -94,5 +100,9 @@ void main()
 		vec3 extra = 0.5*vec3(colorInterval,colorInterval,colorInterval);
 	    FragColor = vec4(colorInterval*coord+extra,1.0f);
 	}
+	
+	// Apply contrast adjustment
+	//float contrast = 2;
+    //FragColor.rgb = (FragColor.rgb - 0.5) * contrast + 0.5;
 
 }

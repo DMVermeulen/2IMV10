@@ -12,12 +12,20 @@ void Scene::addInstance(std::string filePath) {
 	instances.push_back(Instance(filePath, radius, nTris));
 }
 
+void Scene::setActivatedInstance(int id) {
+	activatedInstance = id;
+}
+
 std::vector<Vertex>& Scene::getInstanceVertices(int insId) {
 	return instances.at(insId).getVertices();
 }
 
 std::vector<uint32_t>& Scene::getInstanceIndicies(int insId) {
 	return instances.at(insId).getIndices();
+}
+
+void Scene::drawActivatedInstanceLineMode(float lineWidth) {
+	instances.at(activatedInstance).drawLineMode(lineWidth);
 }
 
 void Scene::drawAllInstancesLineMode(float lineWidth) {
@@ -50,9 +58,10 @@ void Scene::updateMeshNewNTris() {
 }
 
 void Scene::edgeBundling(float p, float radius, int nTris) {
-	for (Instance& instance : instances) {
-		//instance.edgeBundling(p,radius,nTris);
-		instance.edgeBundlingGPU(p, radius, nTris);
-	}
+	//for (Instance& instance : instances) {
+	//	//instance.edgeBundling(p,radius,nTris);
+	//	instance.edgeBundlingGPU(p, radius, nTris);
+	//}
+	instances.at(activatedInstance).edgeBundlingGPU(p, radius, nTris);
 }
 
