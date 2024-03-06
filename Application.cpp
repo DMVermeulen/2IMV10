@@ -27,8 +27,8 @@ void Application::run() {
 }
 
 void Application::initScene() {
-	scene.addInstance("C:\\Users\\zzc_c\\Downloads\\whole_brain.tck"); 
-	scene.addInstance("C:\\Users\\zzc_c\\Downloads\\AF_left (1).tck");
+	scene.addInstance("models\\whole_brain.tck"); 
+	scene.addInstance("models\\AF_left.tck");
 }
 
 
