@@ -19,26 +19,26 @@ void Renderer::init() {
 	height = value[3];
 	//load shaders
 	geoPassShader = std::unique_ptr< Shader >(new Shader(
-		"D:/Projects/FiberVisualization/shaders/geoPassVertex.glsl",
-		"D:/Projects/FiberVisualization/shaders/geoPassFragment.glsl")
+		"shaders/geoPassVertex.glsl",
+		"shaders/geoPassFragment.glsl")
 		);
 
 	lightPassShader = std::unique_ptr< Shader >(new Shader(
-		"D:/Projects/FiberVisualization/shaders/fullQuad.glsl",
-		"D:/Projects/FiberVisualization/shaders/lightPassFragment.glsl")
+		"shaders/fullQuad.glsl",
+		"shaders/lightPassFragment.glsl")
 		);
 
 	ssaoPassShader = std::unique_ptr< Shader >(new Shader(
-		"D:/Projects/FiberVisualization/shaders/fullQuad.glsl",
-		"D:/Projects/FiberVisualization/shaders/ssaoPassFragment.glsl")
+		"shaders/fullQuad.glsl",
+		"shaders/ssaoPassFragment.glsl")
 		);
 	texVisPassShader = std::unique_ptr< Shader >(new Shader(
-		"D:/Projects/FiberVisualization/shaders/fullQuad.glsl",
-		"D:/Projects/FiberVisualization/shaders/texVisPassFragment.glsl")
+		"shaders/fullQuad.glsl",
+		"shaders/texVisPassFragment.glsl")
 		);
 	postPassShader = std::unique_ptr< Shader >(new Shader(
-		"D:/Projects/FiberVisualization/shaders/fullQuad.glsl",
-		"D:/Projects/FiberVisualization/shaders/postPassFragment.glsl")
+		"shaders/fullQuad.glsl",
+		"shaders/postPassFragment.glsl")
 		);
 
 	//init objects for all render passes

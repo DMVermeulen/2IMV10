@@ -8,14 +8,14 @@
 #define INFINITE 999999999
 
 Instance::Instance(std::string path, float radius, int nTris)
-	:denseEstimationShader("D:/Projects/FiberVisualization/shaders/denseEstimation.cs")
-	,advectionShader("D:/Projects/FiberVisualization/shaders/advection.cs")
-    ,voxelCountShader("D:/Projects/FiberVisualization/shaders/voxelCount.cs")
-    ,smoothShader("D:/Projects/FiberVisualization/shaders/smooth.cs")
-	, relaxShader("D:/Projects/FiberVisualization/shaders/relaxation.cs") 
-	, updateDirectionShader("D:/Projects/FiberVisualization/shaders/updateDirections.cs") 
-	, updateNormalShader("D:/Projects/FiberVisualization/shaders/updateNormals.cs")
-	, forceConsecutiveShader("D:/Projects/FiberVisualization/shaders/forceConsecutive.cs") {
+	:denseEstimationShader("shaders/denseEstimation.cs")
+	,advectionShader("shaders/advection.cs")
+    ,voxelCountShader("shaders/voxelCount.cs")
+    ,smoothShader("shaders/smooth.cs")
+	, relaxShader("shaders/relaxation.cs") 
+	, updateDirectionShader("shaders/updateDirections.cs") 
+	, updateNormalShader("shaders/updateNormals.cs")
+	, forceConsecutiveShader("shaders/forceConsecutive.cs") {
 	loadTracksFromTCK(path);
 	//trackResampling();
 	updateTubes(tracks);
