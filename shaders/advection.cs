@@ -92,7 +92,7 @@ void main() {
 		
 		//project grad to normal vector
 		vec3 normal = vec3(tempNormalsData[globalID*3],tempNormalsData[globalID*3+1],tempNormalsData[globalID*3+2]);
-		delta = dot(normal,grad)*normal;
+		delta = dot(normal,delta)*normal;
 
 		updatedTubesData[globalID*3] = oriTubesData[globalID*3]+delta.x;
 		updatedTubesData[globalID*3+1] = oriTubesData[globalID*3+1]+delta.y;

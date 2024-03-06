@@ -65,10 +65,10 @@ private:
 	float voxelUnitSize;
 	int totalVoxels;
 	AABB aabb;   //bounding box for the instance
-	const int nIters = 3;  //number of iterations for edge bundling
+	const int nIters = 20;  //number of iterations for edge bundling
 	const float smoothFactor = 0; 
 	float smoothL;
-	const float relaxFactor = 0.5;
+	const float relaxFactor = 1.0;
 	std::vector<uint32_t> voxelAssignment; //persistently stored
 	std::vector<uint32_t> voxelOffset; 
 	std::vector<uint32_t> voxelSize; 

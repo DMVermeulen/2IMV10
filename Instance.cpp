@@ -674,14 +674,17 @@ void Instance::edgeBundlingGPU(float p, float radius, int nTris) {
 		denseEstimationPass(p);
 		advectionPass(p);
 		smoothPass(p);
+		//re-transfer original tracks to texTempTubes, for relaxation pass
+		glBindBuffer(GL_TEXTURE_BUFFER, texTempTubes);
+		glBufferData(GL_TEXTURE_BUFFER, tubes.size() * 6 * sizeof(float), tubes.data(), GL_STATIC_DRAW);
+		relaxationPass();
+		updateDirectionPass();
+		updateNormalPass();
+
 		transferDataGPU(texSmoothedTubes, texTempTubes, tubes.size() * 6 * sizeof(float));  //copy data from resulting updated to temp for next iteration
 		transferDataGPU(texUpdatedDirections, texTempDirections, tubes.size() * 6 * sizeof(float));
 		transferDataGPU(texUpdatedNormals, texTempNormals, tubes.size() * 6 * sizeof(float));
 	}
-	//re-transfer original tracks to texTempTubes, for relaxation pass
-	glBindBuffer(GL_TEXTURE_BUFFER, texTempTubes);
-	glBufferData(GL_TEXTURE_BUFFER, tubes.size() * 6 * sizeof(float), tubes.data(), GL_STATIC_DRAW);
-	relaxationPass();
 	//line mode
 	transferDataGPU(texRelaxedTubes, VBOLines, tubes.size() * 6 * sizeof(float));  //copy data from smoothed to Vertex buffer
 	transferDataGPU(texUpdatedDirections, DBOLines, tubes.size() * 6 * sizeof(float)); 
