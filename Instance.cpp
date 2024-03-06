@@ -14,9 +14,10 @@ Instance::Instance(std::string path, float radius, int nTris)
     ,smoothShader("D:/Projects/FiberVisualization/shaders/smooth.cs")
 	, relaxShader("D:/Projects/FiberVisualization/shaders/relaxation.cs") 
 	, updateDirectionShader("D:/Projects/FiberVisualization/shaders/updateDirections.cs") 
-	, updateNormalShader("D:/Projects/FiberVisualization/shaders/updateNormals.cs") {
+	, updateNormalShader("D:/Projects/FiberVisualization/shaders/updateNormals.cs")
+	, forceConsecutiveShader("D:/Projects/FiberVisualization/shaders/forceConsecutive.cs") {
 	loadTracksFromTCK(path);
-	trackResampling();
+	//trackResampling();
 	updateTubes(tracks);
 	initLineDirections();
 	initLineNormals();
@@ -167,7 +168,7 @@ std::vector<glm::vec3> Instance::readTCK(const std::string& filename) {
 	int count = 0;
 	int debug = 0;
 	trackOffset.push_back(0);
-	int sample = 10;
+	int sample = 5;
 	glm::vec3 center(0);
 	while (!file.eof()) {
 		float x, y, z;
@@ -678,6 +679,7 @@ void Instance::edgeBundlingGPU(float p, float radius, int nTris) {
 		glBindBuffer(GL_TEXTURE_BUFFER, texTempTubes);
 		glBufferData(GL_TEXTURE_BUFFER, tubes.size() * 6 * sizeof(float), tubes.data(), GL_STATIC_DRAW);
 		relaxationPass();
+		forceConsecutivePass();
 		updateDirectionPass();
 		updateNormalPass();
 
@@ -852,6 +854,15 @@ void Instance::updateNormalPass() {
 
 	updateNormalShader.use();
 	updateNormalShader.setInt("totalSize", 2 * tubes.size());
+
+	glDispatchCompute(1 + (unsigned int)2 * tubes.size() / 128, 1, 1);
+
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+}
+
+void Instance::forceConsecutivePass() {
+	forceConsecutiveShader.use();
+	forceConsecutiveShader.setInt("totalSize", 2 * tubes.size());
 
 	glDispatchCompute(1 + (unsigned int)2 * tubes.size() / 128, 1, 1);
 

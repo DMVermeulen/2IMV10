@@ -59,7 +59,7 @@ private:
 	void trackResampling();
 
 	//edge-bundling related structures on host 
-	const uint32_t nVoxels_Z = 150;
+	const uint32_t nVoxels_Z = 100;
 	uint32_t nVoxels_X;
 	uint32_t nVoxels_Y;
 	float voxelUnitSize;
@@ -68,7 +68,7 @@ private:
 	const int nIters = 20;  //number of iterations for edge bundling
 	const float smoothFactor = 0; 
 	float smoothL;
-	const float relaxFactor = 1.0;
+	const float relaxFactor = 0.6;
 	std::vector<uint32_t> voxelAssignment; //persistently stored
 	std::vector<uint32_t> voxelOffset; 
 	std::vector<uint32_t> voxelSize; 
@@ -87,6 +87,7 @@ private:
 	ComputeShader relaxShader;
 	ComputeShader updateDirectionShader;
 	ComputeShader updateNormalShader;
+	ComputeShader forceConsecutiveShader;
 
 	//GPU passes for edge bundling
 	void voxelCountPass();
@@ -96,6 +97,7 @@ private:
 	void relaxationPass();
 	void updateDirectionPass();
 	void updateNormalPass();
+	void forceConsecutivePass();
 	
 	//helper functions
 	void transferDataGPU(GLuint srcBuffer, GLuint dstBuffer, size_t copySize);
