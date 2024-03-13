@@ -63,5 +63,7 @@ void Scene::edgeBundling(float p, float radius, int nTris) {
 	//	instance.edgeBundlingGPU(p, radius, nTris);
 	//}
 	instances.at(activatedInstance).edgeBundlingGPU(p, radius, nTris);
+	//instances.at(activatedInstance).testSmoothing();
+	//instances.at(activatedInstance).edgeBundlingCUDA(p, radius, nTris);
 }
 

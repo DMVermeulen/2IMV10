@@ -27,10 +27,17 @@ void main() {
 		vec3 newPoint = vec3(smoothedTubesData[globalID*3],smoothedTubesData[globalID*3+1],smoothedTubesData[globalID*3+2]);
         vec3 oriPoint = vec3(tempTubesData[globalID*3],tempTubesData[globalID*3+1],tempTubesData[globalID*3+2]);
 		
+		//vec3 finalPoint = (1-relaxFactor)*oriPoint + relaxFactor*newPoint;
 		vec3 finalPoint = (1-relaxFactor)*oriPoint + relaxFactor*newPoint;
 		relaxedTubesData[globalID*3] = finalPoint.x;
 		relaxedTubesData[globalID*3+1] = finalPoint.y;
 		relaxedTubesData[globalID*3+2] = finalPoint.z;
+		
+		//DEBUG
+		//vec3 debug = relaxFactor*newPoint;
+		//relaxedTubesData[globalID*3] = debug.x;
+		//relaxedTubesData[globalID*3+1] = debug.y;
+		//relaxedTubesData[globalID*3+2] = debug.z;
     }
 
 }

@@ -26,7 +26,7 @@ uniform mat4 view;
 uniform mat4 proj;
 uniform vec3 viewPos;
 
-const vec3 ambient = vec3(0.03,0.03,0.03);
+const vec3 ambient = vec3(0.1,0.1,0.1);
 
 void main()
 {
@@ -71,7 +71,8 @@ void main()
 		float pivotDepth=pivotPos.z;
 		
 		vec4 temp=view*vec4(samplePos,1);
-		float myDepth=temp.z;
+		//float myDepth=temp.z;
+		float myDepth=(view*vec4(fragPos,1)).z;
 		
         // range check & accumulate
         //float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));
@@ -82,13 +83,15 @@ void main()
     occlusion = 1.0 - (occlusion / kernelSize);
 	if(radius<1e-5)
 	  occlusion = 1.0;
-    FragColor = vec4(occlusion * texture(shadedColor,UV).xyz+ambient, 1.0f);
+	//FragColor = vec4(texture(shadedColor,UV).xyz + occlusion * ambient, 1.0f);
+    //FragColor = vec4(occlusion * texture(shadedColor,UV).xyz+ambient, 1.0f);
+	FragColor = vec4(occlusion * (texture(shadedColor,UV).xyz+ambient), 1.0f);
+	//FragColor = vec4(texture(shadedColor,UV).xyz+ambient*occlusion, 1.0f);
 	//FragColor = vec4(texture(shadedColor,UV).xyz, 1.0f);
 	//FragColor = vec4(occlusion, 1.0f);
 	//FragColor = vec4(randomVec, 1.0f);
 	//if(texture(shadedColor,UV).x>0)
 	//  FragColor = vec4(occlusion * vec3(1,0,0)+ambient, 1.0f);
-	
 	
 	
 	//color flattening

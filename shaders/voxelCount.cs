@@ -13,12 +13,17 @@ layout(binding = 5) buffer debug {
     float debugData[];
 };
 
+layout(binding = 6) buffer isFiberEndpoint {
+    int isFiberEndpointData[];
+};
+
 uniform int totalSize;
 uniform int nVoxels_X;
 uniform int nVoxels_Y;
 uniform int nVoxels_Z;
 uniform vec3 aabbMin;
 uniform float voxelUnitSize;
+uniform int totalVoxels;
 
 void main() {
 	int globalID = int(gl_GlobalInvocationID.x);
@@ -31,8 +36,12 @@ void main() {
 		int level_Y = int(min(float(nVoxels_Y - 1), deltaP.y / voxelUnitSize));
 		int level_Z = int(min(float(nVoxels_Z - 1), deltaP.z / voxelUnitSize));
 		int index = nVoxels_X * nVoxels_Y*level_Z + nVoxels_X * level_Y + level_X;
+		index = min(index, totalVoxels-1);
+		index = max(int(0),index);
 		atomicAdd(voxelCountData[index], 1);
 		//voxelCountData[index]+=1;
+		if(1==isFiberEndpointData[globalID])
+		   atomicAdd(voxelCountData[index], 1);	
 	}
 	//debug
 	if (globalID < totalSize) {

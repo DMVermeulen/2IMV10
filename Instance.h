@@ -22,6 +22,11 @@ public:
 	void recreateMeshNewNTris(float radius, int nTris);
 	void edgeBundling(float p, float radius, int nTris);
 	void edgeBundlingGPU(float p, float radius, int nTris);
+	void edgeBundlingCUDA(float p, float radius, int nTris);
+
+	//DEBUG
+	void testSmoothing();
+
 private:
 	//std::vector<std::vector<glm::vec3>> tracks;
 	std::vector<glm::vec3> tracks;     //stores the original tracks without bundling
@@ -59,16 +64,16 @@ private:
 	void trackResampling();
 
 	//edge-bundling related structures on host 
-	const uint32_t nVoxels_Z = 100;
+	uint32_t nVoxels_Z = 250;
 	uint32_t nVoxels_X;
 	uint32_t nVoxels_Y;
 	float voxelUnitSize;
 	int totalVoxels;
 	AABB aabb;   //bounding box for the instance
-	const int nIters = 20;  //number of iterations for edge bundling
-	const float smoothFactor = 0; 
+	int nIters = 20;  //number of iterations for edge bundling
+	const float smoothFactor = 0.99; 
 	float smoothL;
-	const float relaxFactor = 0.6;
+	const float relaxFactor = 0.75;
 	std::vector<uint32_t> voxelAssignment; //persistently stored
 	std::vector<uint32_t> voxelOffset; 
 	std::vector<uint32_t> voxelSize; 
@@ -81,7 +86,7 @@ private:
 
 	//Compute shaders to accelerate edge bundling 
 	ComputeShader voxelCountShader;
-	ComputeShader denseEstimationShader;
+	ComputeShader denseEstimationShader1D;
 	ComputeShader advectionShader;
 	ComputeShader smoothShader;
 	ComputeShader relaxShader;
@@ -106,6 +111,8 @@ private:
 	//GLuint texOriTracks;
 	//GLuint texTempTracks;     //store intermediate result for each iteration, initialized to oriTracks
 	GLuint texVoxelCount;  //Todo: now it's generated using CPU, can be performed by GPU using atomic add
+	GLuint texDenseX;
+	GLuint texDenseY;
 	GLuint texDenseMap;
 	//GLuint texUpdatedTracks;  
 	GLuint debugUINT;
@@ -119,8 +126,24 @@ private:
 	GLuint texUpdatedNormals;
 	GLuint texTempDirections;
 	GLuint texUpdatedDirections;
-
 	void initTextures();
 
+
+	//TEST
+	// CUDA related
+	//pointers to GPU memory
+	int* d_voxelCount;
+	float* d_denseMap;
+	float* d_tempTubes;
+	float* d_updatedTubes;
+	float* d_smoothedTubes;
+	float* d_relaxedTubes;
+	int* d_isFiberEndpoint;
+	float* d_tempNormals;
+	float* d_updatedNormals;
+	float* d_tempDirections;
+	float* d_updatedDirections;
+	void initCudaMemory();
+	void transferDataHostToGL(void* hostMem, GLuint glBuffer, size_t copySize);
 
 };

@@ -61,8 +61,95 @@ void main() {
 			}
 		}
 		
+/* 		//X-direction
+		for (int dx = -kernelR; dx < kernelR; dx++) {
+			int dy=0;
+			int dz=0;
+			int nx = X + dx;
+			nx = max(nx, 0);
+			nx = min(nx, int(nVoxels_X - 1));
+			int ny = Y + dy;
+			ny = max(ny, 0);
+			ny = min(ny, int(nVoxels_Y - 1));
+			int nz = Z + dz;
+			nz = max(nz, 0);
+			nz = min(nz, int(nVoxels_Z - 1));
+			vec3 diff = voxelUnitSize * (vec3(nx, ny, nz) - vec3(X, Y, Z));
+			float dot = dot(diff, diff);
+			float PR2 = kernelR * voxelUnitSize * kernelR * voxelUnitSize;
+			if (dot > PR2)
+				continue;
+			int index = nVoxels_X * nVoxels_Y*nz + nVoxels_X * ny + nx;
+			index = min(int(index), int(totalSize-1));
+			index = max(0,index);
+			int pointCnt = int(voxelCountData[index]);
+			dense += pointCnt * (1 - dot/PR2);
+		}
+		
+		//Y-direction
+		for (int dy = -kernelR; dy < kernelR; dy++) {
+			int dx=0;
+			int dz=0;
+			int nx = X + dx;
+			nx = max(nx, 0);
+			nx = min(nx, int(nVoxels_X - 1));
+			int ny = Y + dy;
+			ny = max(ny, 0);
+			ny = min(ny, int(nVoxels_Y - 1));
+			int nz = Z + dz;
+			nz = max(nz, 0);
+			nz = min(nz, int(nVoxels_Z - 1));
+			vec3 diff = voxelUnitSize * (vec3(nx, ny, nz) - vec3(X, Y, Z));
+			float dot = dot(diff, diff);
+			float PR2 = kernelR * voxelUnitSize * kernelR * voxelUnitSize;
+			if (dot > PR2)
+				continue;
+			int index = nVoxels_X * nVoxels_Y*nz + nVoxels_X * ny + nx;
+			index = min(int(index), int(totalSize-1));
+			index = max(0,index);
+			int pointCnt = int(voxelCountData[index]);
+			dense += pointCnt * (1 - dot/PR2);
+		}
+		
+		//Z-direction
+		for (int dz = -kernelR; dz < kernelR; dz++) {
+			int dx=0;
+			int dy=0;
+			int nx = X + dx;
+			nx = max(nx, 0);
+			nx = min(nx, int(nVoxels_X - 1));
+			int ny = Y + dy;
+			ny = max(ny, 0);
+			ny = min(ny, int(nVoxels_Y - 1));
+			int nz = Z + dz;
+			nz = max(nz, 0);
+			nz = min(nz, int(nVoxels_Z - 1));
+			vec3 diff = voxelUnitSize * (vec3(nx, ny, nz) - vec3(X, Y, Z));
+			float dot = dot(diff, diff);
+			float PR2 = kernelR * voxelUnitSize * kernelR * voxelUnitSize;
+			if (dot > PR2)
+				continue;
+			int index = nVoxels_X * nVoxels_Y*nz + nVoxels_X * ny + nx;
+			index = min(int(index), int(totalSize-1));
+			index = max(0,index);
+			int pointCnt = int(voxelCountData[index]);
+			dense += pointCnt * (1 - dot/PR2);
+		} */
+		
+		//dense -= 2*voxelCountData[nVoxels_X * nVoxels_Y*Z + nVoxels_X * Y + X]*1.0;
+		
+		
 		denseMapData[globalID] = dense;
 		
-		debugData[globalID]=voxelCountData[globalID];
+		
+		//denseMapData[globalID] = voxelCountData[nVoxels_X * nVoxels_Y*Z + nVoxels_X * Y + X]*1.0;
+		
+		//TEST
+		//if(0==voxelCountData[globalID])
+		//	denseMapData[globalID] = 0;
+		
+		//DEBUG
+		//denseMapData[0] = voxelCountData[0];
+		//debugData[globalID]=voxelCountData[globalID];
     }
 }
