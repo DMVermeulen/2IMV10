@@ -23,6 +23,7 @@ public:
 	void edgeBundling(float p, float radius, int nTris);
 	void edgeBundlingGPU(float p, float radius, int nTris);
 	void edgeBundlingCUDA(float p, float radius, int nTris);
+	void initSSBOBinding();
 
 	//DEBUG
 	void testSmoothing();
@@ -64,16 +65,16 @@ private:
 	void trackResampling();
 
 	//edge-bundling related structures on host 
-	uint32_t nVoxels_Z = 250;
+	uint32_t nVoxels_Z = 500;
 	uint32_t nVoxels_X;
 	uint32_t nVoxels_Y;
 	float voxelUnitSize;
 	int totalVoxels;
 	AABB aabb;   //bounding box for the instance
-	int nIters = 20;  //number of iterations for edge bundling
+	int nIters = 15;  //number of iterations for edge bundling
 	const float smoothFactor = 0.99; 
 	float smoothL;
-	const float relaxFactor = 0.75;
+	const float relaxFactor = 0.85;
 	std::vector<uint32_t> voxelAssignment; //persistently stored
 	std::vector<uint32_t> voxelOffset; 
 	std::vector<uint32_t> voxelSize; 
@@ -86,7 +87,9 @@ private:
 
 	//Compute shaders to accelerate edge bundling 
 	ComputeShader voxelCountShader;
-	ComputeShader denseEstimationShader1D;
+	ComputeShader denseEstimationShaderX;
+	ComputeShader denseEstimationShaderY;
+	ComputeShader denseEstimationShaderZ;
 	ComputeShader advectionShader;
 	ComputeShader smoothShader;
 	ComputeShader relaxShader;

@@ -1,15 +1,20 @@
 #version 330 core
 
+#define COLOR_MODE_DIRECTION 0
+#define COLOR_MODE_DENSITY 1
+#define COLOR_MODE_GRADIENT 2
+
 in vec2 UV;
 out vec4 fragColor;
 
 uniform sampler2D worldPos;
 uniform sampler2D gDir;
 uniform sampler2D gNormal;
-
 uniform vec3 viewPos;
+uniform int colorMode;
 
 const vec3 lightPos=vec3(0,0,100);
+
 
 void main() {
 	vec3 fragPos = texture(worldPos, UV).rgb;
@@ -33,5 +38,6 @@ void main() {
 	//fragColor = vec4(1*(diffuse + specular)*albedo,1.0);
 	
 	//NO LIGHTING
+	
 	fragColor = vec4(albedo,1.0);
 }

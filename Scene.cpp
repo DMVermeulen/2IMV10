@@ -14,6 +14,7 @@ void Scene::addInstance(std::string filePath) {
 
 void Scene::setActivatedInstance(int id) {
 	activatedInstance = id;
+	instances.at(id).initSSBOBinding();
 }
 
 std::vector<Vertex>& Scene::getInstanceVertices(int insId) {

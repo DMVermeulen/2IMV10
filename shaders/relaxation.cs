@@ -33,11 +33,6 @@ void main() {
 		relaxedTubesData[globalID*3+1] = finalPoint.y;
 		relaxedTubesData[globalID*3+2] = finalPoint.z;
 		
-		//DEBUG
-		//vec3 debug = relaxFactor*newPoint;
-		//relaxedTubesData[globalID*3] = debug.x;
-		//relaxedTubesData[globalID*3+1] = debug.y;
-		//relaxedTubesData[globalID*3+2] = debug.z;
     }
 
 }

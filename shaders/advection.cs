@@ -18,9 +18,6 @@ layout(binding = 9) buffer tempNormals {
     float tempNormalsData[];
 };
 
-layout(binding = 5) buffer debug {
-    float debugData[];
-};
 
 uniform int totalSize;
 uniform int nVoxels_X;
@@ -139,14 +136,6 @@ void main() {
 		updatedTubesData[globalID*3+1] = oriTubesData[globalID*3+1]+delta.y;
 		updatedTubesData[globalID*3+2] = oriTubesData[globalID*3+2]+delta.z;
 		
-		//updatedTracksData[globalID] = delta;
-		//debug
-		//debugData[globalID*3]=oriTubesData[globalID*3];
-		//debugData[globalID*3+1]=oriTubesData[globalID*3+1];
-		//debugData[globalID*3+2]=oriTubesData[globalID*3+2];
-		debugData[globalID*3]=delta.x;
-		debugData[globalID*3+1]=delta.y;
-		debugData[globalID*3+2]=delta.z;
     }
 
 }

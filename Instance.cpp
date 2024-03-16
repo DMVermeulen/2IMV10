@@ -44,14 +44,17 @@ extern "C" void cuda_relaxation(
 );
 
 Instance::Instance(std::string path, float radius, int nTris)
-	:denseEstimationShader1D("shaders/denseEstimation.cs")
-	,advectionShader("shaders/advection.cs")
-    ,voxelCountShader("shaders/voxelCount.cs")
-    ,smoothShader("shaders/smooth.cs")
-	, relaxShader("shaders/relaxation.cs") 
-	, updateDirectionShader("shaders/updateDirections.cs") 
-	, updateNormalShader("shaders/updateNormals.cs")
-	, forceConsecutiveShader("shaders/forceConsecutive.cs") {
+	://denseEstimationShader1D("shaders/denseEstimation.cs")
+	denseEstimationShaderX("shaders/denseEstimationX.cs"),
+	denseEstimationShaderY("shaders/denseEstimationY.cs"),
+	denseEstimationShaderZ("shaders/denseEstimationZ.cs"),
+	advectionShader("shaders/advection.cs"),
+    voxelCountShader("shaders/voxelCount.cs"),
+    smoothShader("shaders/smooth.cs"),
+	relaxShader("shaders/relaxation.cs"), 
+	updateDirectionShader("shaders/updateDirections.cs"), 
+	updateNormalShader("shaders/updateNormals.cs"),
+	forceConsecutiveShader("shaders/forceConsecutive.cs") {
 	loadTracksFromTCK(path);
 	spaceVoxelization();
 	trackResampling();
@@ -67,6 +70,7 @@ Instance::Instance(std::string path, float radius, int nTris)
 	initVertexBufferLineMode();
 
 	initTextures();
+	initSSBOBinding();
 	//initCudaMemory();
 }
 
@@ -141,7 +145,7 @@ void Instance::initTextures() {
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texDenseX);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, totalVoxels * sizeof(float), NULL, GL_STATIC_READ | GL_STATIC_DRAW);
 
-	//denseMap (1-D buffer)
+	//denseY (1-D buffer)
 	glGenBuffers(1, &texDenseY);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texDenseY);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, totalVoxels * sizeof(float), NULL, GL_STATIC_READ | GL_STATIC_DRAW);
@@ -165,6 +169,19 @@ void Instance::initTextures() {
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, debugFLOAT);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, 6* tubes.size() * sizeof(float), NULL, GL_STATIC_DRAW);
 
+}
+
+void Instance::initSSBOBinding() {
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texTempTubes);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, texVoxelCount);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, texIsFiberEndpoint);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, texDenseMap);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, texUpdatedTubes);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 9, texTempNormals);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, texSmoothedTubes);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, texRelaxedTubes);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 10, texDenseX);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 11, texDenseY);
 }
 
 int Instance::getNumberVertices(){
@@ -290,8 +307,8 @@ void Instance::trackResampling() {
 	//	aveLength.push_back(sum);
 	//}
 	
-	//float delta = nVoxels_Z * voxelUnitSize / 100;
-	float delta = voxelUnitSize;
+	float delta = nVoxels_Z * voxelUnitSize / 150;
+	//float delta = voxelUnitSize;
 	std::vector<glm::vec3>resampledTracks;
 	std::vector<uint32_t>tempTrackOffset;
 	std::vector<uint32_t>tempTrackSize;
@@ -778,10 +795,10 @@ void Instance::edgeBundlingGPU(float _p, float radius, int nTris) {
 
 //tubes->voxelCount
 void Instance::voxelCountPass() {
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texTempTubes);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, texVoxelCount);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, debugFLOAT);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, texIsFiberEndpoint);
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texTempTubes);
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, texVoxelCount);
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, debugFLOAT);
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, texIsFiberEndpoint);
 
 	voxelCountShader.use();
 	voxelCountShader.setInt("totalSize", 2 * tubes.size());
@@ -822,43 +839,51 @@ void Instance::voxelCountPass() {
 
 //voxelVount->denseMap
 void Instance::denseEstimationPass(float p) {
-	//glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_3D, texVoxelCount);
-	//glBindImageTexture(0, texDenseMap, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32UI);
+	//denseEstimationShader1D.use();
+	//denseEstimationShader1D.setInt("totalSize", totalVoxels);
+	//denseEstimationShader1D.setInt("nVoxels_X", nVoxels_X);
+	//denseEstimationShader1D.setInt("nVoxels_Y", nVoxels_Y);
+	//denseEstimationShader1D.setInt("nVoxels_Z", nVoxels_Z);
+	//denseEstimationShader1D.setInt("kernelR", p*nVoxels_Z);
+	////denseEstimationShader.setInt("kernelR", 4);
+	//denseEstimationShader1D.setFloat("voxelUnitSize", voxelUnitSize);
+	//glDispatchCompute(1+(unsigned int)totalVoxels/128, 1, 1);
 
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, texDenseMap);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, debugUINT);
+	//// make sure writing to buffer has finished before read
+	//glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
-	denseEstimationShader1D.use();
-	denseEstimationShader1D.setInt("totalSize", totalVoxels);
-	denseEstimationShader1D.setInt("nVoxels_X", nVoxels_X);
-	denseEstimationShader1D.setInt("nVoxels_Y", nVoxels_Y);
-	denseEstimationShader1D.setInt("nVoxels_Z", nVoxels_Z);
-	denseEstimationShader1D.setInt("kernelR", p*nVoxels_Z);
-	//denseEstimationShader.setInt("kernelR", 4);
-	denseEstimationShader1D.setFloat("voxelUnitSize", voxelUnitSize);
-	glDispatchCompute(1+(unsigned int)totalVoxels/128, 1, 1);
-
-	// make sure writing to buffer has finished before read
+	//Convolution on X
+	denseEstimationShaderX.use();
+	denseEstimationShaderX.setInt("totalSize", totalVoxels);
+	denseEstimationShaderX.setInt("nVoxels_X", nVoxels_X);
+	denseEstimationShaderX.setInt("nVoxels_Y", nVoxels_Y);
+	denseEstimationShaderX.setInt("nVoxels_Z", nVoxels_Z);
+	denseEstimationShaderX.setInt("kernelR", p * nVoxels_Z);
+	denseEstimationShaderX.setFloat("voxelUnitSize", voxelUnitSize);
+	glDispatchCompute(1 + (unsigned int)totalVoxels / 128, 1, 1);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
-	////explicitly unbind textures and images after use
-	//glBindTexture(GL_TEXTURE_3D, 0);
-	//glBindImageTexture(0, 0, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32UI);
+	//Convolution on Y
+	denseEstimationShaderY.use();
+	denseEstimationShaderY.setInt("totalSize", totalVoxels);
+	denseEstimationShaderY.setInt("nVoxels_X", nVoxels_X);
+	denseEstimationShaderY.setInt("nVoxels_Y", nVoxels_Y);
+	denseEstimationShaderY.setInt("nVoxels_Z", nVoxels_Z);
+	denseEstimationShaderY.setInt("kernelR", p * nVoxels_Z);
+	denseEstimationShaderY.setFloat("voxelUnitSize", voxelUnitSize);
+	glDispatchCompute(1 + (unsigned int)totalVoxels / 128, 1, 1);
+	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
-	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, texDenseMap);
-	//float* bufferData = (float*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
-	//for (int i = 0; i < totalVoxels; i++) {
-	//	if(bufferData[i]>1)
-	//		std::cout<<bufferData[i];
-	//}
-
-	//glBindBuffer(GL_ARRAY_BUFFER, debugUINT);
-	//uint32_t * debugData = (uint32_t*)glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE);
-	//for (int i = 0; i < totalVoxels; i++) {
-	//	if (debugData[i] != 0)
-	//		std::cout << debugData[i];
-	//}
+	//Convolution on Z
+	denseEstimationShaderZ.use();
+	denseEstimationShaderZ.setInt("totalSize", totalVoxels);
+	denseEstimationShaderZ.setInt("nVoxels_X", nVoxels_X);
+	denseEstimationShaderZ.setInt("nVoxels_Y", nVoxels_Y);
+	denseEstimationShaderZ.setInt("nVoxels_Z", nVoxels_Z);
+	denseEstimationShaderZ.setInt("kernelR", p * nVoxels_Z);
+	denseEstimationShaderZ.setFloat("voxelUnitSize", voxelUnitSize);
+	glDispatchCompute(1 + (unsigned int)totalVoxels / 128, 1, 1);
+	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 }
 
 //update tubes, stores to texUpdatedTubes
@@ -866,10 +891,10 @@ void Instance::advectionPass(float p) {
 	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, texOriTracks);
 	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, texUpdatedTracks);
 
-	//set binding buffers for compute pass
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, texUpdatedTubes);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, debugFLOAT);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 9, texTempNormals);
+	////set binding buffers for compute pass
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, texUpdatedTubes);
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, debugFLOAT);
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 9, texTempNormals);
 
 	advectionShader.use();
 	advectionShader.setInt("totalSize", 2*tubes.size());
@@ -894,7 +919,7 @@ void Instance::advectionPass(float p) {
 
 void Instance::smoothPass(float p) {
 	int smoothL = p * nVoxels_Z;
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, texSmoothedTubes);
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, texSmoothedTubes);
 
 	smoothShader.use();
 	smoothShader.setInt("totalSize", 2 * tubes.size());
@@ -915,8 +940,8 @@ void Instance::smoothPass(float p) {
 
 void Instance::relaxationPass() {
 
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texTempTubes);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, texRelaxedTubes);
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texTempTubes);
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, texRelaxedTubes);
 
 	relaxShader.use();
 	relaxShader.setInt("totalSize", 2 * tubes.size());

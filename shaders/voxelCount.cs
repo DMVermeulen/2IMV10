@@ -9,10 +9,6 @@ layout (binding = 1, std430) buffer voxelCount {
     uint voxelCountData[];
 };
 
-layout(binding = 5) buffer debug {
-    float debugData[];
-};
-
 layout(binding = 6) buffer isFiberEndpoint {
     int isFiberEndpointData[];
 };
@@ -42,12 +38,6 @@ void main() {
 		//voxelCountData[index]+=1;
 		if(1==isFiberEndpointData[globalID])
 		   atomicAdd(voxelCountData[index], 1);	
-	}
-	//debug
-	if (globalID < totalSize) {
-		debugData[globalID*3]=oriTubesData[globalID*3];
-		debugData[globalID*3+1]=oriTubesData[globalID*3+1];
-		debugData[globalID*3+2]=oriTubesData[globalID*3+2];
 	}
 	
 }

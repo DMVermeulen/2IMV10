@@ -10,9 +10,6 @@ layout(binding = 2) buffer denseMap {
     float denseMapData[];
 };
 
-layout(binding = 5) buffer debug {
-    uint debugData[];
-};
 
 uniform int totalSize;
 uniform int nVoxels_X;
@@ -148,8 +145,5 @@ void main() {
 		//if(0==voxelCountData[globalID])
 		//	denseMapData[globalID] = 0;
 		
-		//DEBUG
-		//denseMapData[0] = voxelCountData[0];
-		//debugData[globalID]=voxelCountData[globalID];
     }
 }
