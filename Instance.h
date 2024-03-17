@@ -24,6 +24,14 @@ public:
 	void edgeBundlingGPU(float p, float radius, int nTris);
 	void edgeBundlingCUDA(float p, float radius, int nTris);
 	void initSSBOBinding();
+	int getNVoxelsX();
+	int getNVoxelsY();
+	int getNVoxelsZ();
+	glm::vec3 getAABBMin();
+	float getVoxelUnitSize();
+	int getTotalVoxels();
+	GLuint getDenseMap();
+	GLuint getVoxelCount();
 
 	//DEBUG
 	void testSmoothing();
@@ -65,7 +73,7 @@ private:
 	void trackResampling();
 
 	//edge-bundling related structures on host 
-	uint32_t nVoxels_Z = 500;
+	uint32_t nVoxels_Z = 400;  //500
 	uint32_t nVoxels_X;
 	uint32_t nVoxels_Y;
 	float voxelUnitSize;

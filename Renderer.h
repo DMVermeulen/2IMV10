@@ -18,6 +18,8 @@ public:
 	void setSSAORadius(float R);
 	void setColorFlattening(float colorInterval);
 	void setContrast(float contrast);
+	void updateShadingPassInstanceInfo();
+	void setRenderMode(int renderMode);
 private:
 	Scene* scene = nullptr; 
 	Camera* camera = nullptr;
@@ -78,6 +80,7 @@ private:
 	float lineWidth = 1.0f;
 	float colorInterval = 0;
 	float contrast = 1.0f;
+	int renderMode = 0;
 
 	//commonly used helper function (may moved to class RenderPassBase)
 	void createQuadObjects();

@@ -97,6 +97,7 @@ void Application::initWindow() {
 void Application::initRenderer() {
 	renderer.init();
 	renderer.setScene(&scene);
+	renderer.updateShadingPassInstanceInfo();
 	renderer.setCamera(&camera);
 	renderer.setViewportSize(SCR_WIDTH, SCR_HEIGHT);
 }
@@ -169,13 +170,14 @@ void Application::renderUI() {
 
 		//Select an instance to visualize
 		static const char* items[] = { "instance 0 ", "instance 1" };
-		static int currentItem = 1;
+		static int currentItem = 0;
 		if (ImGui::BeginCombo("##combo", items[currentItem])) {
 			for (int i = 0; i < IM_ARRAYSIZE(items); i++) {
 				bool isSelected = (currentItem == i);
 				if (ImGui::Selectable(items[i], isSelected)) {
 					currentItem = i;
 					scene.setActivatedInstance(i);
+					renderer.updateShadingPassInstanceInfo();
 				}
 				if (isSelected)
 					ImGui::SetItemDefaultFocus();

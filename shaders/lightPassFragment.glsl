@@ -1,4 +1,4 @@
-#version 330 core
+#version 430 core
 
 #define COLOR_MODE_DIRECTION 0
 #define COLOR_MODE_DENSITY 1
@@ -12,9 +12,20 @@ uniform sampler2D gDir;
 uniform sampler2D gNormal;
 uniform vec3 viewPos;
 uniform int colorMode;
+uniform sampler3D denseMap;
+
+uniform int nVoxels_X;
+uniform int nVoxels_Y;
+uniform int nVoxels_Z;
+uniform vec3 aabbMin;
+uniform float voxelUnitSize;
+uniform int totalVoxels;
 
 const vec3 lightPos=vec3(0,0,100);
 
+float sigmoid(float x) {
+    return 1.0f / (1.0f + exp(-x));
+}
 
 void main() {
 	vec3 fragPos = texture(worldPos, UV).rgb;
@@ -38,6 +49,23 @@ void main() {
 	//fragColor = vec4(1*(diffuse + specular)*albedo,1.0);
 	
 	//NO LIGHTING
+    if (colorMode == COLOR_MODE_DIRECTION) {
+	   fragColor = vec4(albedo,1.0);
+    } 
+	else if (colorMode == COLOR_MODE_DENSITY) {
+	   vec3 deltaP = fragPos - aabbMin;
+	   int level_X = int(min(float(nVoxels_X - 1), deltaP.x / voxelUnitSize));
+	   int level_Y = int(min(float(nVoxels_Y - 1), deltaP.y / voxelUnitSize));
+	   int level_Z = int(min(float(nVoxels_Z - 1), deltaP.z / voxelUnitSize));
+	   
+	   vec3 texCoord = vec3(1.0*level_X/nVoxels_X,1.0*level_Y/nVoxels_Y,1.0*level_Z/nVoxels_Z);
+	   float dense = texture(denseMap,texCoord).r;
+	   fragColor = vec4(sigmoid(dense),0,0,1.0);
+    } 
+	else if (colorMode == COLOR_MODE_GRADIENT) {
 	
-	fragColor = vec4(albedo,1.0);
+    } 
+	else {
+	
+    }
 }

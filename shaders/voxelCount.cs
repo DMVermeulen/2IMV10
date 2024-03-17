@@ -25,6 +25,8 @@ void main() {
 	int globalID = int(gl_GlobalInvocationID.x);
 	
 	//if ((globalID < totalSize) && (globalID%2==0)) {
+	
+	//1-D buffer implementation
 	if (globalID < totalSize) {
 	    vec3 point = vec3(oriTubesData[globalID*3],oriTubesData[globalID*3+1],oriTubesData[globalID*3+2]);
 		vec3 deltaP = point - aabbMin;

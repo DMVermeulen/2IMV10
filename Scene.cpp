@@ -68,3 +68,35 @@ void Scene::edgeBundling(float p, float radius, int nTris) {
 	//instances.at(activatedInstance).edgeBundlingCUDA(p, radius, nTris);
 }
 
+int Scene::getInstanceNVoxelsX() {
+	return instances.at(activatedInstance).getNVoxelsX();
+}
+
+int Scene::getInstanceNVoxelsY() {
+	return instances.at(activatedInstance).getNVoxelsY();
+}
+
+int Scene::getInstanceNVoxelsZ() {
+	return instances.at(activatedInstance).getNVoxelsZ();
+}
+
+glm::vec3 Scene::getInstanceAABBMin() {
+	return instances.at(activatedInstance).getAABBMin();
+}
+
+float Scene::getInstanceVoxelUnitSize() {
+	return instances.at(activatedInstance).getVoxelUnitSize();
+}
+
+int Scene::getInstanceTotalVoxels() {
+	return instances.at(activatedInstance).getTotalVoxels();
+}
+
+GLuint Scene::getInstanceDenseMap() {
+	return instances.at(activatedInstance).getDenseMap();
+}
+
+GLuint Scene::getInstanceVoxelCount() {
+	return instances.at(activatedInstance).getVoxelCount();
+}
+

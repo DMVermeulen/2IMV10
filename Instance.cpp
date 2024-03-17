@@ -79,7 +79,6 @@ Instance::~Instance() {
 }
 
 void Instance::initTextures() {
-	//Currently we implement all textures as 1-D buffer
 	////original tracks
 	//glGenBuffers(1, &texOriTracks);
 	//glBindBuffer(GL_TEXTURE_BUFFER, texOriTracks);
@@ -140,20 +139,41 @@ void Instance::initTextures() {
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texVoxelCount);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, totalVoxels * sizeof(uint32_t), NULL, GL_STATIC_DRAW);
 
-	//denseX (1-D buffer)
-	glGenBuffers(1, &texDenseX);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texDenseX);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, totalVoxels * sizeof(float), NULL, GL_STATIC_READ | GL_STATIC_DRAW);
+	////denseX (1-D buffer)
+	//glGenBuffers(1, &texDenseX);
+	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, texDenseX);
+	//glBufferData(GL_SHADER_STORAGE_BUFFER, totalVoxels * sizeof(float), NULL, GL_STATIC_READ | GL_STATIC_DRAW);
 
-	//denseY (1-D buffer)
-	glGenBuffers(1, &texDenseY);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texDenseY);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, totalVoxels * sizeof(float), NULL, GL_STATIC_READ | GL_STATIC_DRAW);
+	////denseY (1-D buffer)
+	//glGenBuffers(1, &texDenseY);
+	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, texDenseY);
+	//glBufferData(GL_SHADER_STORAGE_BUFFER, totalVoxels * sizeof(float), NULL, GL_STATIC_READ | GL_STATIC_DRAW);
 
-	//denseMap (1-D buffer)
-	glGenBuffers(1, &texDenseMap);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texDenseMap);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, totalVoxels * sizeof(float), NULL, GL_STATIC_READ| GL_STATIC_DRAW);
+	////denseMap (1-D buffer)
+	//glGenBuffers(1, &texDenseMap);
+	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, texDenseMap);
+	//glBufferData(GL_SHADER_STORAGE_BUFFER, totalVoxels * sizeof(float), NULL, GL_STATIC_READ| GL_STATIC_DRAW);
+
+	//denseX (3D texture)
+	glGenTextures(1, &texDenseX);
+	glBindTexture(GL_TEXTURE_3D, texDenseX);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, nVoxels_X, nVoxels_Y, nVoxels_Z, 0, GL_RED, GL_FLOAT, NULL);
+
+	//denseY (3D texture)
+	glGenTextures(1, &texDenseY);
+	glBindTexture(GL_TEXTURE_3D, texDenseY);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, nVoxels_X, nVoxels_Y, nVoxels_Z, 0, GL_RED, GL_FLOAT, NULL);
+
+	//denseMap (3D texture)
+	glGenTextures(1, &texDenseMap);
+	glBindTexture(GL_TEXTURE_3D, texDenseMap);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, nVoxels_X, nVoxels_Y, nVoxels_Z, 0, GL_RED, GL_FLOAT, NULL);
 
 	//isFiberEndpoint
 	glGenBuffers(1, &texIsFiberEndpoint);
@@ -175,13 +195,18 @@ void Instance::initSSBOBinding() {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texTempTubes);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, texVoxelCount);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, texIsFiberEndpoint);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, texDenseMap);
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, texDenseMap);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, texUpdatedTubes);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 9, texTempNormals);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, texSmoothedTubes);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, texRelaxedTubes);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 10, texDenseX);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 11, texDenseY);
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 10, texDenseX);
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 11, texDenseY);
+
+	glBindImageTexture(0, texDenseMap, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
+	glBindImageTexture(1, texDenseX, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
+	glBindImageTexture(2, texDenseY, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
+
 }
 
 int Instance::getNumberVertices(){
@@ -234,7 +259,7 @@ std::vector<glm::vec3> Instance::readTCK(const std::string& filename) {
 	int count = 0;
 	int debug = 0;
 	trackOffset.push_back(0);
-	int sample = 1;
+	int sample = 2;
 	glm::vec3 center(0);
 	while (!file.eof()) {
 		float x, y, z;
@@ -1214,4 +1239,36 @@ void Instance::testSmoothing() {
 	forceConsecutivePass();
 
 	transferDataGPU(texSmoothedTubes, VBOLines, tubes.size() * 6 * sizeof(float));
+}
+
+int Instance::getNVoxelsX() {
+	return nVoxels_X;
+}
+
+int Instance::getNVoxelsY() {
+	return nVoxels_Y;
+}
+
+int Instance::getNVoxelsZ() {
+	return nVoxels_Z;
+}
+
+glm::vec3 Instance::getAABBMin() {
+	return aabb.minPos;
+}
+
+float Instance::getVoxelUnitSize() {
+	return voxelUnitSize;
+}
+
+int Instance::getTotalVoxels() {
+	return totalVoxels;
+}
+
+GLuint Instance::getDenseMap() {
+	return texDenseMap;
+}
+
+GLuint Instance::getVoxelCount() {
+	return texVoxelCount;
 }
