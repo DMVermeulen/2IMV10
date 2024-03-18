@@ -54,7 +54,8 @@ Instance::Instance(std::string path, float radius, int nTris)
 	relaxShader("shaders/relaxation.cs"), 
 	updateDirectionShader("shaders/updateDirections.cs"), 
 	updateNormalShader("shaders/updateNormals.cs"),
-	forceConsecutiveShader("shaders/forceConsecutive.cs") {
+	forceConsecutiveShader("shaders/forceConsecutive.cs"),
+	slicingShader("shaders/slicing.cs"){
 	loadTracksFromTCK(path);
 	spaceVoxelization();
 	trackResampling();
@@ -70,7 +71,7 @@ Instance::Instance(std::string path, float radius, int nTris)
 	initVertexBufferLineMode();
 
 	initTextures();
-	initSSBOBinding();
+	//initSSBOBinding();
 	//initCudaMemory();
 }
 
@@ -113,6 +114,8 @@ void Instance::initTextures() {
 	glGenBuffers(1, &texRelaxedTubes);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texRelaxedTubes);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
+
+	transferDataGPU(VBOLines, texRelaxedTubes, tubes.size() * 6 * sizeof(float));
 
 	//temp normals
 	glGenBuffers(1, &texTempNormals);
@@ -200,6 +203,7 @@ void Instance::initSSBOBinding() {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 9, texTempNormals);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, texSmoothedTubes);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, texRelaxedTubes);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 10, VBOLines);
 	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 10, texDenseX);
 	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 11, texDenseY);
 
@@ -812,6 +816,11 @@ void Instance::edgeBundlingGPU(float _p, float radius, int nTris) {
 	//transferDataGPU(texUpdatedDirections, DBOLines, tubes.size() * 6 * sizeof(float)); 
 	//transferDataGPU(texUpdatedNormals, NBOLines, tubes.size() * 6 * sizeof(float));  
 
+	//update slicing
+	if (enableSlicling) {
+		slicing(slicingPos,slicingDir);
+	}
+
 	//triangle mode
 	//updateTubes(newTracks);
 	//updateTriangles(radius, nTris);
@@ -1271,4 +1280,24 @@ GLuint Instance::getDenseMap() {
 
 GLuint Instance::getVoxelCount() {
 	return texVoxelCount;
+}
+
+void Instance::slicing(glm::vec3 pos, glm::vec3 dir) {
+	if (!enableSlicling)
+		return;
+	slicingPos = pos;
+	slicingDir = dir;
+
+	slicingShader.use();
+	slicingShader.setInt("totalSize", tubes.size());
+	slicingShader.setVec3("pos", slicingPos);
+	slicingShader.setVec3("dir", dir);
+
+	glDispatchCompute(1 + (unsigned int)tubes.size() / 128, 1, 1);
+
+	glMemoryBarrier(GL_ALL_BARRIER_BITS);
+}
+
+void Instance::updateEnableSlicing() {
+	enableSlicling = !enableSlicling;
 }

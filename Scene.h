@@ -17,6 +17,7 @@ public:
 	void setRadius(float r);
 	void setNTris(int n);
 	void edgeBundling(float p, float radius, int nTris);
+	void slicing(glm::vec3 pos, glm::vec3 dir);
 	void setActivatedInstance(int id);
 	int getInstanceNVoxelsX();
 	int getInstanceNVoxelsY();
@@ -26,12 +27,13 @@ public:
 	int getInstanceTotalVoxels();
 	GLuint getInstanceDenseMap();
 	GLuint getInstanceVoxelCount();
+	void updateInstanceEnableSlicing();
 private:
 	//parameters used to build triangles from streamlines
 	float radius = 0.1f;
 	int nTris = 3;
 	
-	int activatedInstance=1;
+	int activatedInstance=0;
 
 	std::vector<Instance> instances;
 	void updateMeshNewRadius();

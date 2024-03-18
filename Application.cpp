@@ -29,6 +29,11 @@ void Application::run() {
 void Application::initScene() {
 	scene.addInstance("models\\whole_brain.tck"); 
 	scene.addInstance("models\\AF_left.tck");
+	scene.setActivatedInstance(0);
+
+	//test
+	//scene.updateInstanceEnableSlicing();
+	scene.slicing(glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
 }
 
 

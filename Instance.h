@@ -32,6 +32,8 @@ public:
 	int getTotalVoxels();
 	GLuint getDenseMap();
 	GLuint getVoxelCount();
+	void updateEnableSlicing();
+	void slicing(glm::vec3 pos, glm::vec3 dir);
 
 	//DEBUG
 	void testSmoothing();
@@ -138,6 +140,12 @@ private:
 	GLuint texTempDirections;
 	GLuint texUpdatedDirections;
 	void initTextures();
+
+	//Slicing related
+	bool enableSlicling=false;
+	glm::vec3 slicingPos;
+	glm::vec3 slicingDir;
+	ComputeShader slicingShader;
 
 
 	//TEST

@@ -100,3 +100,11 @@ GLuint Scene::getInstanceVoxelCount() {
 	return instances.at(activatedInstance).getVoxelCount();
 }
 
+void Scene::slicing(glm::vec3 pos, glm::vec3 dir) {
+	instances.at(activatedInstance).slicing(pos, dir);
+}
+
+void Scene::updateInstanceEnableSlicing() {
+	instances.at(activatedInstance).updateEnableSlicing();
+}
+
