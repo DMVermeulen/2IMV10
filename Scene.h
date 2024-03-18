@@ -33,7 +33,7 @@ private:
 	float radius = 0.1f;
 	int nTris = 3;
 	
-	int activatedInstance=0;
+	int activatedInstance=1;
 
 	std::vector<Instance> instances;
 	void updateMeshNewRadius();

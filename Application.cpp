@@ -167,62 +167,91 @@ void Application::renderUI() {
 		static float contrast = 0.5;
 		static int counter = 0;
 
-		ImGui::Begin("Settings");                          // Create a window called "Hello, world!" and append into it.
+		//ImGui::Begin("Settings");                          // Create a window called "Hello, world!" and append into it.
 
-		ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-		ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-		ImGui::Checkbox("Another Window", &show_another_window);
+		//ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+		//ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+		//ImGui::Checkbox("Another Window", &show_another_window);
 
-		//Select an instance to visualize
-		static const char* items[] = { "instance 0 ", "instance 1" };
-		static int currentItem = 0;
-		if (ImGui::BeginCombo("##combo", items[currentItem])) {
-			for (int i = 0; i < IM_ARRAYSIZE(items); i++) {
-				bool isSelected = (currentItem == i);
-				if (ImGui::Selectable(items[i], isSelected)) {
-					currentItem = i;
-					scene.setActivatedInstance(i);
-					renderer.updateShadingPassInstanceInfo();
-				}
-				if (isSelected)
-					ImGui::SetItemDefaultFocus();
+		////Select an instance to visualize
+		//static const char* items[] = { "instance 0 ", "instance 1" };
+		//static int currentItem = 0;
+		//if (ImGui::BeginCombo("##combo", items[currentItem])) {
+		//	for (int i = 0; i < IM_ARRAYSIZE(items); i++) {
+		//		bool isSelected = (currentItem == i);
+		//		if (ImGui::Selectable(items[i], isSelected)) {
+		//			currentItem = i;
+		//			scene.setActivatedInstance(i);
+		//			renderer.updateShadingPassInstanceInfo();
+		//		}
+		//		if (isSelected)
+		//			ImGui::SetItemDefaultFocus();
+		//	}
+		//	ImGui::EndCombo();
+		//}
+
+		//if (ImGui::SliderFloat("camera speed", &cameraSpeed, 0.0f, 200.0f)) {
+		//	camera.setSpeed(cameraSpeed);
+		//}
+		////if (ImGui::SliderFloat("tube size", &tubeRadius, 0.0f, 10.0f)) {
+		////	scene.setRadius(tubeRadius);
+		////}
+		////if (ImGui::SliderFloat("tube granularity", &tubeGranularity, 0.0f, 1.0f)) {
+		////	scene.setNTris(int(8 * tubeGranularity));
+		////}
+		//if (ImGui::SliderFloat("Fiber bundling", &fiberBundling, 0.0f, 1.0f)) {
+		//	scene.edgeBundling(fiberBundling/25,tubeRadius, int(8 * tubeGranularity));
+		//	//scene.edgeBundling(0.1, tubeRadius, int(8 * tubeGranularity));
+		//}
+		//if (ImGui::SliderFloat("Line width", &lineWidth, 0.0f, 1.0f)) {
+		//	renderer.setLineWidth(lineWidth*3);
+		//}
+		//if (ImGui::SliderFloat("SSAO", &ssao, 0.0f, 1.0f)) {
+		//	renderer.setSSAORadius(ssao*50);
+		//}
+		//if (ImGui::SliderFloat("Contrast", &contrast, 0.0f, 1.0f)) {
+		//	renderer.setContrast(contrast*2);
+		//}
+		//if (ImGui::SliderFloat("Color flattening", &colorInterval, 0.0f, 1.0f)) {
+		//	renderer.setColorFlattening(colorInterval/2);
+		//}
+		//ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+
+		//if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+		//	counter++;
+		//ImGui::SameLine();
+		//ImGui::Text("counter = %d", counter);
+
+		//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+		//ImGui::End();
+
+
+		ImGui::Begin("Settings");
+		if (ImGui::CollapsingHeader("Window options"))
+		{
+			if (ImGui::SliderFloat("Color flattening", &colorInterval, 0.0f, 1.0f)) {
+				renderer.setColorFlattening(colorInterval / 2);
 			}
-			ImGui::EndCombo();
+			if (ImGui::SliderFloat("Color flattening", &colorInterval, 0.0f, 1.0f)) {
+				renderer.setColorFlattening(colorInterval / 2);
+			}
+			if (ImGui::SliderFloat("Color flattening", &colorInterval, 0.0f, 1.0f)) {
+				renderer.setColorFlattening(colorInterval / 2);
+			}
 		}
 
-		if (ImGui::SliderFloat("camera speed", &cameraSpeed, 0.0f, 200.0f)) {
-			camera.setSpeed(cameraSpeed);
+		if (ImGui::CollapsingHeader("Window options"))
+		{
+			if (ImGui::SliderFloat("Color flattening", &colorInterval, 0.0f, 1.0f)) {
+				renderer.setColorFlattening(colorInterval / 2);
+			}
+			if (ImGui::SliderFloat("Color flattening", &colorInterval, 0.0f, 1.0f)) {
+				renderer.setColorFlattening(colorInterval / 2);
+			}
+			if (ImGui::SliderFloat("Color flattening", &colorInterval, 0.0f, 1.0f)) {
+				renderer.setColorFlattening(colorInterval / 2);
+			}
 		}
-		//if (ImGui::SliderFloat("tube size", &tubeRadius, 0.0f, 10.0f)) {
-		//	scene.setRadius(tubeRadius);
-		//}
-		//if (ImGui::SliderFloat("tube granularity", &tubeGranularity, 0.0f, 1.0f)) {
-		//	scene.setNTris(int(8 * tubeGranularity));
-		//}
-		if (ImGui::SliderFloat("Fiber bundling", &fiberBundling, 0.0f, 1.0f)) {
-			scene.edgeBundling(fiberBundling/25,tubeRadius, int(8 * tubeGranularity));
-			//scene.edgeBundling(0.1, tubeRadius, int(8 * tubeGranularity));
-		}
-		if (ImGui::SliderFloat("Line width", &lineWidth, 0.0f, 1.0f)) {
-			renderer.setLineWidth(lineWidth*3);
-		}
-		if (ImGui::SliderFloat("SSAO", &ssao, 0.0f, 1.0f)) {
-			renderer.setSSAORadius(ssao*50);
-		}
-		if (ImGui::SliderFloat("Contrast", &contrast, 0.0f, 1.0f)) {
-			renderer.setContrast(contrast*2);
-		}
-		if (ImGui::SliderFloat("Color flattening", &colorInterval, 0.0f, 1.0f)) {
-			renderer.setColorFlattening(colorInterval/2);
-		}
-		ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-		if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-			counter++;
-		ImGui::SameLine();
-		ImGui::Text("counter = %d", counter);
-
-		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 		ImGui::End();
 
 	// 3. Show another simple window.
