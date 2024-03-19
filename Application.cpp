@@ -156,12 +156,17 @@ void Application::renderUI() {
 		static float roughness = 0.2f;
 		static float metallic = 0.8f;
 		static float ssao = 0.2f;
-		static float colorInterval = 0;
 		static float contrast = 0.5;
+		static float colorInterval = 0;
+		static float brightness = 0;
+		static float sharpening = 0;
 		static int counter = 0;
 		static glm::vec3 slicingPos;
 		static glm::vec3 slicingDir;
 		static bool enableSlicing = false;
+		static int colorMode = 0;
+		static int lightingMode = 0;
+		glm::vec3 colorMapConstant=glm::vec3(0,0,1);
 
 		//ImGui::Begin("Settings");                          // Create a window called "Hello, world!" and append into it.
 
@@ -177,15 +182,6 @@ void Application::renderUI() {
 		////	scene.setNTris(int(8 * tubeGranularity));
 		////}
 
-		//if (ImGui::SliderFloat("SSAO", &ssao, 0.0f, 1.0f)) {
-		//	renderer.setSSAORadius(ssao*50);
-		//}
-		//if (ImGui::SliderFloat("Contrast", &contrast, 0.0f, 1.0f)) {
-		//	renderer.setContrast(contrast*2);
-		//}
-		//if (ImGui::SliderFloat("Color flattening", &colorInterval, 0.0f, 1.0f)) {
-		//	renderer.setColorFlattening(colorInterval/2);
-		//}
 		//ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
 
 		//if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
@@ -268,7 +264,72 @@ void Application::renderUI() {
 			}
 		}
 
+		if (ImGui::CollapsingHeader("Colormap"))
+		{
+			static const char* colorModes[] = { "direction ", "normal","constant" };
+			static int currentItem = 0;
+			if (ImGui::BeginCombo("##combo", colorModes[currentItem])) {
+				for (int i = 0; i < IM_ARRAYSIZE(colorModes); i++) {
+					bool isSelected = (currentItem == i);
+					if (ImGui::Selectable(colorModes[i], isSelected)) {
+						currentItem = i;
+						renderer.setColorMode(i);
+					}
+					//if (isSelected && i != 2) // Exclude the color mapping board option from this condition
+					//	ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			if (2==currentItem) {
+				if (ImGui::ColorPicker3("Color", (float*)&colorMapConstant, ImGuiColorEditFlags_NoInputs)) {
+					renderer.setColorConstant(colorMapConstant);
+				}
+			}
+		}
 
+		if (ImGui::CollapsingHeader("lighting mode"))
+		{
+			static const char* lightingModes[] = { "normal", "PBR" };
+			static int currentItem = 0;
+			if (ImGui::BeginCombo("##combo", lightingModes[currentItem])) {
+				for (int i = 0; i < IM_ARRAYSIZE(lightingModes); i++) {
+					bool isSelected = (currentItem == i);
+					if (ImGui::Selectable(lightingModes[i], isSelected)) {
+						currentItem = i;
+						renderer.setLightingMode(i);
+					}
+				}
+				ImGui::EndCombo();
+			}
+			if (1 == currentItem) {
+				if (ImGui::SliderFloat("roughness", &roughness, 0.0f, 1.0f)) {
+					scene.setInstanceMaterial(roughness, metallic);
+				}
+				if (ImGui::SliderFloat("metallic", &metallic, 0.0f, 1.0f)) {
+					scene.setInstanceMaterial(roughness, metallic);
+				}
+			}
+		}
+
+		if (ImGui::CollapsingHeader("Post effects"))
+		{
+			if (ImGui::SliderFloat("SSAO", &ssao, 0.0f, 1.0f)) {
+				renderer.setSSAORadius(ssao*50);
+			}
+			if (ImGui::SliderFloat("Contrast", &contrast, 0.0f, 1.0f)) {
+				renderer.setContrast(contrast*2);
+			}
+			if (ImGui::SliderFloat("Brightness", &brightness, 0.0f, 1.0f)) {
+				renderer.setBrightness(brightness);
+			}
+			if (ImGui::SliderFloat("Sharpening", &sharpening, 0.0f, 1.0f)) {
+				renderer.setSharpening(sharpening);
+			}
+			if (ImGui::SliderFloat("Color flattening", &colorInterval, 0.0f, 1.0f)) {
+	            renderer.setColorFlattening(colorInterval/2);
+            }
+
+		}
 
 		ImGui::End();
 

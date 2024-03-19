@@ -40,6 +40,10 @@ void Renderer::init() {
 		"shaders/fullQuad.glsl",
 		"shaders/postPassFragment.glsl")
 		);
+	sharpeningPassShader = std::unique_ptr< Shader >(new Shader(
+		"shaders/fullQuad.glsl",
+		"shaders/sharpeningPassFragment.glsl")
+		);
 
 	//init objects for all render passes
 	initGeoPassObjects();
@@ -68,6 +72,7 @@ void Renderer::renderFrame() {
 	ssaoPass();
 	//textureVisPass();
 	postProcessingPass();
+	sharpeningPass();
 }
 
 void Renderer::initGeoPassObjects() {
@@ -236,9 +241,31 @@ void Renderer::initSSAOPassObjects() {
 }
 
 void Renderer::initPostPassObjects() {
+	glGenFramebuffers(1, &framebufferPostPass);
+	glBindFramebuffer(GL_FRAMEBUFFER, framebufferPostPass);
+
+	glGenTextures(1, &colorBufferPostPass);
+	glBindTexture(GL_TEXTURE_2D, colorBufferPostPass);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBufferPostPass, 0);
+
+	GLuint attachments[1] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, attachments);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "shading Framebuffer not complete!" << std::endl;
+
 	postPassShader->enable();
 	postPassShader->setInt("imageWithAO", 0);
 	postPassShader->disable();
+}
+
+void Renderer::initSharpeningObjects() {
+	sharpeningPassShader->enable();
+	sharpeningPassShader->setInt("imageData", 0);
+	sharpeningPassShader->disable();
 }
 
 void Renderer::initTexVisPassObjects() {
@@ -305,6 +332,7 @@ void Renderer::shadingPass() {
 	lightPassShader->setFloat("metallic", metal);
 	lightPassShader->setInt("lightingMode", lightingMode);
 	lightPassShader->setInt("colorMode", colorMode);
+	lightPassShader->setVec3("constantAlbedo", colorConstant);
 
 	renderQuad();
 
@@ -354,21 +382,32 @@ void Renderer::ssaoPass() {
 }
 
 void Renderer::postProcessingPass() {
+
+	//contrast + illuminance
 	glDisable(GL_DEPTH_TEST);
+	glBindFramebuffer(GL_FRAMEBUFFER, framebufferPostPass);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	postPassShader->enable();
-
-	//textures to sample from
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, colorBufferSSAOPass);
-
-	//set uniforms
 	postPassShader->setFloat("contrast", contrast);
-
+	postPassShader->setFloat("brightness", brightness);
 	renderQuad();
-
 	glBindVertexArray(0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	postPassShader->disable();
+}
+
+void Renderer::sharpeningPass() {
+	glDisable(GL_DEPTH_TEST);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	sharpeningPassShader->enable();
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, colorBufferPostPass);
+	sharpeningPassShader->setFloat("sharpening", sharpening);
+	renderQuad();
+	glBindVertexArray(0);
+	sharpeningPassShader->disable();
 }
 
 void Renderer::textureVisPass() {
@@ -418,6 +457,14 @@ void Renderer::setContrast(float _contrast) {
 	contrast = _contrast;
 }
 
+void Renderer::setBrightness(float _brightness) {
+	brightness = _brightness;
+}
+
+void Renderer::setSharpening(float _sharpening) {
+	sharpening = _sharpening;
+}
+
 void Renderer::updateShadingPassInstanceInfo() {
 	lightPassShader->enable();
 	lightPassShader->setInt("nVoxels_X", scene->getInstanceNVoxelsX());
@@ -439,4 +486,8 @@ void Renderer::setLightingMode(int _lightingMode) {
 
 void Renderer::setColorMode(int _colorMode) {
 	colorMode = _colorMode;
+}
+
+void Renderer::setColorConstant(glm::vec3 constant) {
+	colorConstant = constant;
 }

@@ -18,10 +18,13 @@ public:
 	void setSSAORadius(float R);
 	void setColorFlattening(float colorInterval);
 	void setContrast(float contrast);
+	void setBrightness(float brightness);
+	void setSharpening(float sharpening);
 	void updateShadingPassInstanceInfo();
 	void setRenderMode(int renderMode);
 	void setLightingMode(int lightingMode);
 	void setColorMode(int colorMode);
+	void setColorConstant(glm::vec3 constant);
 private:
 	Scene* scene = nullptr; 
 	Camera* camera = nullptr;
@@ -32,12 +35,14 @@ private:
 	void initShadingPassObjects();
 	void initSSAOPassObjects();
 	void initPostPassObjects();
+	void initSharpeningObjects();
 	void initTexVisPassObjects();
 
 	void geometryPass();
 	void shadingPass();
 	void ssaoPass();
 	void postProcessingPass();
+	void sharpeningPass();
 	void renderQuad();
 	void textureVisPass();
 
@@ -70,6 +75,11 @@ private:
 
 	//For postProcessing pass
 	std::unique_ptr<Shader> postPassShader;
+	GLuint framebufferPostPass;
+	GLuint colorBufferPostPass;
+
+	//For sharpening pass
+	std::unique_ptr<Shader> sharpeningPassShader;
 
 	//For texture visualization pass
 	std::unique_ptr<Shader> texVisPassShader;
@@ -82,9 +92,12 @@ private:
 	float lineWidth = 1.0f;
 	float colorInterval = 0;
 	float contrast = 1.0f;
+	float brightness = 0.0f;
+	float sharpening = 0.0f;
 	int renderMode = 0;
 	int lightingMode = 0;
 	int colorMode = 0;
+	glm::vec3 colorConstant = glm::vec3(0, 0, 1);
 
 	//commonly used helper function (may moved to class RenderPassBase)
 	void createQuadObjects();

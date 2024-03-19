@@ -26,7 +26,8 @@ uniform mat4 view;
 uniform mat4 proj;
 uniform vec3 viewPos;
 
-const vec3 ambient = vec3(0.1,0.1,0.1);
+//const vec3 ambient = vec3(0.1,0.1,0.1);
+const vec3 ambient = vec3(0.1,0,0);
 
 void main()
 {
@@ -107,5 +108,7 @@ void main()
 	// Apply contrast adjustment
 	//float contrast = 2;
     //FragColor.rgb = (FragColor.rgb - 0.5) * contrast + 0.5;
-
+	
+	if(dir.x==0)
+	  FragColor = vec4(0,0,0,1);
 }

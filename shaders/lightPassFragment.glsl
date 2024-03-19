@@ -135,7 +135,7 @@ void main() {
             albedo = normalize(abs(normal));
             break;
         case COLOR_MODE_CONSTANT:
-            albedo = constanAlbedo;
+            albedo = constantAlbedo;
             break;
         default:
             albedo = vec3(0,0,1);
@@ -152,7 +152,7 @@ void main() {
 	   vec3 Lo = vec3(0.0);
 	   for(int i=0;i<34;i++){
 	   vec3 L=lightDir[i];
-	   H = normalize(L+V);
+	   vec3 H = normalize(L+V);
        // calculate per-light radiance
        vec3 radiance = vec3(1,1,1);        
         
@@ -178,4 +178,6 @@ void main() {
        color = pow(color, vec3(1.0/2.2));  
 	   fragColor = vec4(1.3*color+ambient,1.0f);
 	}
+	if(fragPos.x==0)
+	   fragColor = vec4(0,0,0,1);
 }
