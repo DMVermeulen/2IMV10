@@ -104,7 +104,15 @@ void Scene::slicing(glm::vec3 pos, glm::vec3 dir) {
 	instances.at(activatedInstance).slicing(pos, dir);
 }
 
-void Scene::updateInstanceEnableSlicing() {
-	instances.at(activatedInstance).updateEnableSlicing();
+void Scene::updateInstanceEnableSlicing(glm::vec3 pos, glm::vec3 dir) {
+	instances.at(activatedInstance).updateEnableSlicing(pos, dir);
+}
+
+void Scene::setInstanceMaterial(float roughness, float metallic) {
+	instances.at(activatedInstance).setMaterial(roughness, metallic);
+}
+
+void Scene::getInstanceMaterial(float* roughness, float* metallic) {
+	instances.at(activatedInstance).getMaterial(roughness, metallic);
 }
 

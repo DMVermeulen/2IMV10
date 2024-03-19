@@ -27,6 +27,8 @@ private:
 	ImGuiIO io;
 	bool show_demo_window = true;
 	bool show_another_window = false;
+	bool ImGuiIOWantCaptureMouse = false;
+	bool ImGuiIOWantCaptureKeyboard = false;
 	ImVec4 clear_color = ImVec4(0, 0, 0, 1.00f);
 	int SCR_WIDTH = 1280;
 	int SCR_HEIGHT = 720;

@@ -1285,6 +1285,8 @@ GLuint Instance::getVoxelCount() {
 void Instance::slicing(glm::vec3 pos, glm::vec3 dir) {
 	if (!enableSlicling)
 		return;
+	if (glm::dot(dir, dir) < 1e-3)
+		return;
 	slicingPos = pos;
 	slicingDir = dir;
 
@@ -1298,6 +1300,21 @@ void Instance::slicing(glm::vec3 pos, glm::vec3 dir) {
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 }
 
-void Instance::updateEnableSlicing() {
+void Instance::updateEnableSlicing(glm::vec3 pos, glm::vec3 dir) {
 	enableSlicling = !enableSlicling;
+	slicingPos = pos;
+	slicingDir = dir;
+	if (enableSlicling)
+		slicing(slicingPos, slicingDir);
+	else
+		transferDataGPU(texRelaxedTubes, VBOLines, sizeof(float) * 6 * tubes.size());
+}
+
+void Instance::setMaterial(float _roughness, float _metallic) {
+	roughness = _roughness;
+	metallic = _metallic;
+}
+void Instance::getMaterial(float* _roughness, float* _metallic) {
+	*_roughness = roughness;
+	*_metallic = metallic;
 }

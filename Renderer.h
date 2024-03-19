@@ -20,6 +20,8 @@ public:
 	void setContrast(float contrast);
 	void updateShadingPassInstanceInfo();
 	void setRenderMode(int renderMode);
+	void setLightingMode(int lightingMode);
+	void setColorMode(int colorMode);
 private:
 	Scene* scene = nullptr; 
 	Camera* camera = nullptr;
@@ -81,6 +83,8 @@ private:
 	float colorInterval = 0;
 	float contrast = 1.0f;
 	int renderMode = 0;
+	int lightingMode = 0;
+	int colorMode = 0;
 
 	//commonly used helper function (may moved to class RenderPassBase)
 	void createQuadObjects();

@@ -27,13 +27,15 @@ public:
 	int getInstanceTotalVoxels();
 	GLuint getInstanceDenseMap();
 	GLuint getInstanceVoxelCount();
-	void updateInstanceEnableSlicing();
+	void updateInstanceEnableSlicing(glm::vec3 pos, glm::vec3 dir);
+	void setInstanceMaterial(float roughness, float metallic);
+	void getInstanceMaterial(float* roughness, float* metallic);
 private:
 	//parameters used to build triangles from streamlines
 	float radius = 0.1f;
 	int nTris = 3;
 	
-	int activatedInstance=1;
+	int activatedInstance=0;
 
 	std::vector<Instance> instances;
 	void updateMeshNewRadius();

@@ -32,8 +32,10 @@ public:
 	int getTotalVoxels();
 	GLuint getDenseMap();
 	GLuint getVoxelCount();
-	void updateEnableSlicing();
+	void updateEnableSlicing(glm::vec3 pos, glm::vec3 dir);
 	void slicing(glm::vec3 pos, glm::vec3 dir);
+	void setMaterial(float roughness, float metallic);
+	void getMaterial(float* roughness, float* metallic);
 
 	//DEBUG
 	void testSmoothing();
@@ -146,6 +148,10 @@ private:
 	glm::vec3 slicingPos;
 	glm::vec3 slicingDir;
 	ComputeShader slicingShader;
+
+	//PBR materials
+	float roughness=0.2f;
+	float metallic=0.8f;
 
 
 	//TEST

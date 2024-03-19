@@ -37,14 +37,14 @@ public:
 	float Yaw;
 	float Pitch;
 	// camera options
-	float MovementSpeed;
-	float MouseSensitivity;
+	float moveSpeed;
+	float mouseSensitivity;
 	float Zoom;
 
 	float centerDis;
 
 	// constructor with vectors
-	Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH) : Front(glm::vec3(0.0f, 0.01f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
+	Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH) : Front(glm::vec3(0.0f, 0.01f, -1.0f)), moveSpeed(SPEED), mouseSensitivity(SENSITIVITY), Zoom(ZOOM)
 	{
 		Position = position;
 		WorldUp = up;
@@ -69,7 +69,7 @@ public:
 	// processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
 	void ProcessKeyboard(Camera_Movement direction, float deltaTime)
 	{
-		float velocity = MovementSpeed *deltaTime;
+		float velocity = moveSpeed *deltaTime;
 		if (direction == FORWARD) {
 			Position += Front * velocity;
 			centerDis -= velocity;
@@ -88,8 +88,8 @@ public:
 	// processes input received from a mouse input system. Expects the offset value in both the x and y direction.
 	void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true)
 	{
-		xoffset *= MouseSensitivity;
-		yoffset *= MouseSensitivity;
+		xoffset *= mouseSensitivity;
+		yoffset *= mouseSensitivity;
 
 		Yaw += xoffset;
 		Pitch += yoffset;
@@ -119,7 +119,11 @@ public:
 	}
 
 	void setSpeed(float speed) {
-		MovementSpeed = speed;
+		moveSpeed = speed;
+	}
+
+	void setSensitivity(float sense) {
+		mouseSensitivity = sense;
 	}
 
 private:

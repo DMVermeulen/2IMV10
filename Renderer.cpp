@@ -299,6 +299,12 @@ void Renderer::shadingPass() {
 
 	lightPassShader->setVec3("viewPos",camera->Position);
 	lightPassShader->setInt("colorMode", this->renderMode);
+	float rough, metal;
+	scene->getInstanceMaterial(&rough, &metal);
+	lightPassShader->setFloat("roughness",rough);
+	lightPassShader->setFloat("metallic", metal);
+	lightPassShader->setInt("lightingMode", lightingMode);
+	lightPassShader->setInt("colorMode", colorMode);
 
 	renderQuad();
 
@@ -425,4 +431,12 @@ void Renderer::updateShadingPassInstanceInfo() {
 
 void Renderer::setRenderMode(int _mode) {
 	renderMode = _mode;
+}
+
+void Renderer::setLightingMode(int _lightingMode) {
+	lightingMode = _lightingMode;
+}
+
+void Renderer::setColorMode(int _colorMode) {
+	colorMode = _colorMode;
 }

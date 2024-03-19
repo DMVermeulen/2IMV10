@@ -107,23 +107,13 @@ void Application::initRenderer() {
 	renderer.setViewportSize(SCR_WIDTH, SCR_HEIGHT);
 }
 
-void Application::processInput(GLFWwindow *window){
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, true);
-
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		camera.ProcessKeyboard(FORWARD, deltaTime);
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		camera.ProcessKeyboard(BACKWARD, deltaTime);
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		camera.ProcessKeyboard(LEFT, deltaTime);
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		camera.ProcessKeyboard(RIGHT, deltaTime);
-}
-
 void Application::mainLoop() {
 	while (!glfwWindowShouldClose(window))
 	{
+		io = ImGui::GetIO();
+		ImGuiIOWantCaptureMouse = io.WantCaptureMouse;
+		ImGuiIOWantCaptureKeyboard = io.WantCaptureKeyboard;
+
 		float currentFrame = static_cast<float>(glfwGetTime());
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
@@ -158,14 +148,20 @@ void Application::mainLoop() {
 
 void Application::renderUI() {
 		static float cameraSpeed = 0.0f;
+		static float mouseSensitivity = 0.0f;
 		static float tubeRadius = 0.1f;
 		static float tubeGranularity = 1;
 		static float fiberBundling = 0;
 		static float lineWidth = 0.1f;
+		static float roughness = 0.2f;
+		static float metallic = 0.8f;
 		static float ssao = 0.2f;
 		static float colorInterval = 0;
 		static float contrast = 0.5;
 		static int counter = 0;
+		static glm::vec3 slicingPos;
+		static glm::vec3 slicingDir;
+		static bool enableSlicing = false;
 
 		//ImGui::Begin("Settings");                          // Create a window called "Hello, world!" and append into it.
 
@@ -173,39 +169,14 @@ void Application::renderUI() {
 		//ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
 		//ImGui::Checkbox("Another Window", &show_another_window);
 
-		////Select an instance to visualize
-		//static const char* items[] = { "instance 0 ", "instance 1" };
-		//static int currentItem = 0;
-		//if (ImGui::BeginCombo("##combo", items[currentItem])) {
-		//	for (int i = 0; i < IM_ARRAYSIZE(items); i++) {
-		//		bool isSelected = (currentItem == i);
-		//		if (ImGui::Selectable(items[i], isSelected)) {
-		//			currentItem = i;
-		//			scene.setActivatedInstance(i);
-		//			renderer.updateShadingPassInstanceInfo();
-		//		}
-		//		if (isSelected)
-		//			ImGui::SetItemDefaultFocus();
-		//	}
-		//	ImGui::EndCombo();
-		//}
 
-		//if (ImGui::SliderFloat("camera speed", &cameraSpeed, 0.0f, 200.0f)) {
-		//	camera.setSpeed(cameraSpeed);
-		//}
 		////if (ImGui::SliderFloat("tube size", &tubeRadius, 0.0f, 10.0f)) {
 		////	scene.setRadius(tubeRadius);
 		////}
 		////if (ImGui::SliderFloat("tube granularity", &tubeGranularity, 0.0f, 1.0f)) {
 		////	scene.setNTris(int(8 * tubeGranularity));
 		////}
-		//if (ImGui::SliderFloat("Fiber bundling", &fiberBundling, 0.0f, 1.0f)) {
-		//	scene.edgeBundling(fiberBundling/25,tubeRadius, int(8 * tubeGranularity));
-		//	//scene.edgeBundling(0.1, tubeRadius, int(8 * tubeGranularity));
-		//}
-		//if (ImGui::SliderFloat("Line width", &lineWidth, 0.0f, 1.0f)) {
-		//	renderer.setLineWidth(lineWidth*3);
-		//}
+
 		//if (ImGui::SliderFloat("SSAO", &ssao, 0.0f, 1.0f)) {
 		//	renderer.setSSAORadius(ssao*50);
 		//}
@@ -227,31 +198,78 @@ void Application::renderUI() {
 
 
 		ImGui::Begin("Settings");
-		if (ImGui::CollapsingHeader("Window options"))
+		if (ImGui::CollapsingHeader("Models"))
 		{
 			if (ImGui::SliderFloat("Color flattening", &colorInterval, 0.0f, 1.0f)) {
 				renderer.setColorFlattening(colorInterval / 2);
 			}
-			if (ImGui::SliderFloat("Color flattening", &colorInterval, 0.0f, 1.0f)) {
-				renderer.setColorFlattening(colorInterval / 2);
-			}
-			if (ImGui::SliderFloat("Color flattening", &colorInterval, 0.0f, 1.0f)) {
-				renderer.setColorFlattening(colorInterval / 2);
+			//Select an instance to visualize
+			static const char* items[] = { "instance 0 ", "instance 1" };
+			static int currentItem = 0;
+			if (ImGui::BeginCombo("##combo", items[currentItem])) {
+				for (int i = 0; i < IM_ARRAYSIZE(items); i++) {
+					bool isSelected = (currentItem == i);
+					if (ImGui::Selectable(items[i], isSelected)) {
+						currentItem = i;
+						scene.setActivatedInstance(i);
+						//getInstanceSettings();
+						renderer.updateShadingPassInstanceInfo();
+					}
+					if (isSelected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
 			}
 		}
 
-		if (ImGui::CollapsingHeader("Window options"))
+		if (ImGui::CollapsingHeader("View"))
 		{
-			if (ImGui::SliderFloat("Color flattening", &colorInterval, 0.0f, 1.0f)) {
-				renderer.setColorFlattening(colorInterval / 2);
+			if (ImGui::SliderFloat("camera speed", &cameraSpeed, 0.0f, 200.0f)) {
+				camera.setSpeed(cameraSpeed);
 			}
-			if (ImGui::SliderFloat("Color flattening", &colorInterval, 0.0f, 1.0f)) {
-				renderer.setColorFlattening(colorInterval / 2);
-			}
-			if (ImGui::SliderFloat("Color flattening", &colorInterval, 0.0f, 1.0f)) {
-				renderer.setColorFlattening(colorInterval / 2);
+			if (ImGui::SliderFloat("mouse sensitivity", &mouseSensitivity, 0.0f, 1.0f)) {
+				camera.setSpeed(mouseSensitivity);
 			}
 		}
+
+		if (ImGui::CollapsingHeader("Bundling"))
+		{
+			if (ImGui::SliderFloat("Line width", &lineWidth, 0.0f, 1.0f)) {
+				renderer.setLineWidth(lineWidth*3);
+			}
+
+			if (ImGui::SliderFloat("bundling", &fiberBundling, 0.0f, 1.0f)) {
+				scene.edgeBundling(fiberBundling/25,tubeRadius, int(8 * tubeGranularity));
+			}
+		}
+
+		if (ImGui::CollapsingHeader("Slicing"))
+		{
+			if (ImGui::Checkbox("Enable", &enableSlicing)) {
+				scene.updateInstanceEnableSlicing(slicingPos,slicingDir);
+			}
+
+			if (ImGui::SliderFloat3("slicing pos", &slicingPos.x, 0, 1.0f)) {
+				scene.slicing(slicingPos, slicingDir);
+			}
+
+			if (ImGui::SliderFloat3("slicing dir", &slicingDir.x, 0, 1.0f)) {
+				scene.slicing(slicingPos, slicingDir);
+			}
+		}
+
+		if (ImGui::CollapsingHeader("Materials"))
+		{
+			if (ImGui::SliderFloat("roughness", &roughness, 0.0f, 1.0f)) {
+				scene.setInstanceMaterial(roughness, metallic);
+			}
+			if (ImGui::SliderFloat("metallic", &metallic, 0.0f, 1.0f)) {
+				scene.setInstanceMaterial(roughness, metallic);
+			}
+		}
+
+
+
 		ImGui::End();
 
 	// 3. Show another simple window.
@@ -273,6 +291,9 @@ void Application::renderFrame() {
 
 void Application::mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
+	if (m_app->ImGuiIOWantCaptureMouse || m_app->ImGuiIOWantCaptureKeyboard)
+		return;
+
 	float xpos = static_cast<float>(xposIn);
 	float ypos = static_cast<float>(yposIn);
 
@@ -291,6 +312,23 @@ void Application::mouse_callback(GLFWwindow* window, double xposIn, double yposI
 	
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
 		m_app->camera.ProcessMouseMovement(xoffset, yoffset);
+}
+
+void Application::processInput(GLFWwindow* window) {
+	if (m_app->ImGuiIOWantCaptureMouse || m_app->ImGuiIOWantCaptureKeyboard)
+		return;
+
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
+
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		camera.ProcessKeyboard(FORWARD, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		camera.ProcessKeyboard(BACKWARD, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		camera.ProcessKeyboard(LEFT, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		camera.ProcessKeyboard(RIGHT, deltaTime);
 }
 
 void Application::scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
