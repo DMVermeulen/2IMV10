@@ -25,11 +25,12 @@ public:
 	void setLightingMode(int lightingMode);
 	void setColorMode(int colorMode);
 	void setColorConstant(glm::vec3 constant);
+	void updateViewportSize(int width, int height);
 private:
 	Scene* scene = nullptr; 
 	Camera* camera = nullptr;
-	int WIDTH;
-	int HEIGHT;
+	//int WIDTH;
+	//int HEIGHT;
 
 	void initGeoPassObjects();
 	void initShadingPassObjects();
@@ -37,6 +38,7 @@ private:
 	void initPostPassObjects();
 	void initSharpeningObjects();
 	void initTexVisPassObjects();
+	void recreateObjects();
 
 	void geometryPass();
 	void shadingPass();
@@ -85,7 +87,8 @@ private:
 	std::unique_ptr<Shader> texVisPassShader;
 
 	//viewport size
-	GLuint width, height;
+	int width = -1;
+	int height=-1;
 
 	//UI parameters
 	float ssaoRadius=10;

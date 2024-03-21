@@ -12,11 +12,12 @@ Renderer::~Renderer() {
 }
 
 void Renderer::init() {
-	//query for viewport size
-	GLint value[4];
-	glGetIntegerv(GL_VIEWPORT, value);
-	width = value[2];
-	height = value[3];
+	////query for viewport size
+	//GLint value[4];
+	//glGetIntegerv(GL_VIEWPORT, value);
+	//width = value[2];
+	//height = value[3];
+	
 	//load shaders
 	geoPassShader = std::unique_ptr< Shader >(new Shader(
 		"shaders/geoPassVertex.glsl",
@@ -61,9 +62,92 @@ void Renderer::setCamera(Camera* _camera) {
 	camera = _camera;
 }
 
-void Renderer::setViewportSize(int width, int height) {
-	WIDTH = width;
-	HEIGHT = height;
+void Renderer::setViewportSize(int _width, int _height) {
+	width = _width;
+	height=_height;
+		
+}
+void Renderer::updateViewportSize(int _width, int _height) {
+	width = _width;
+	height = _height;
+	recreateObjects();
+}
+
+void Renderer::recreateObjects() {
+	//geopass
+	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+	glBindTexture(GL_TEXTURE_2D, gPos);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPos, 0);
+
+	glBindTexture(GL_TEXTURE_2D, gNormal);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
+
+	glBindTexture(GL_TEXTURE_2D, gDir);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gDir, 0);
+
+	GLuint attachmentsGeo[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+	glDrawBuffers(3, attachmentsGeo);
+
+	glBindRenderbuffer(GL_RENDERBUFFER, depthMap);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthMap);
+
+	if (GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
+		std::cout << "Incomplete framebuffer! " << std::endl;
+
+	//shading pass
+	glBindFramebuffer(GL_FRAMEBUFFER, framebufferShadingPass);
+
+	glBindTexture(GL_TEXTURE_2D, colorBufferShadingPass);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBufferShadingPass, 0);
+
+	GLuint attachmentsShading[1] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, attachmentsShading);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "shading Framebuffer not complete!" << std::endl;
+
+	//SSAO pass
+	glBindFramebuffer(GL_FRAMEBUFFER, framebufferSSAOPass);
+
+	glBindTexture(GL_TEXTURE_2D, colorBufferSSAOPass);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBufferSSAOPass, 0);
+
+	GLuint attachmentsAO[1] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, attachmentsAO);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "shading Framebuffer not complete!" << std::endl;
+
+	//post pass
+	glBindFramebuffer(GL_FRAMEBUFFER, framebufferPostPass);
+
+	glBindTexture(GL_TEXTURE_2D, colorBufferPostPass);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBufferPostPass, 0);
+
+	GLuint attachmentsPost[1] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, attachmentsPost);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "shading Framebuffer not complete!" << std::endl;
 }
 
 void Renderer::renderFrame() {
@@ -282,7 +366,7 @@ void Renderer::geometryPass() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// pass transformation matrices to shader, remember to enable shader before setting uniform values!!!
 	geoPassShader->enable();
-	glm::mat4 proj = glm::perspective(glm::radians(camera->Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 1000.0f);
+	glm::mat4 proj = glm::perspective(glm::radians(camera->Zoom), (float)width / (float)height, 0.1f, 1000.0f);
 	glUniformMatrix4fv(glGetUniformLocation(geoPassShader->getProgramId(), "proj"), 1, GL_FALSE, &proj[0][0]);
 	glm::mat4 view = camera->GetViewMatrix();
 	glUniformMatrix4fv(glGetUniformLocation(geoPassShader->getProgramId(), "view"), 1, GL_FALSE, &view[0][0]);
@@ -366,7 +450,7 @@ void Renderer::ssaoPass() {
 	//set uniforms
 	for (unsigned int i = 0; i < 64; ++i)
 		ssaoPassShader->setVec3("samples[" + std::to_string(i) + "]", ssaoKernel[i]);
-	glm::mat4 proj = glm::perspective(glm::radians(camera->Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 1000.0f);
+	glm::mat4 proj = glm::perspective(glm::radians(camera->Zoom), (float)width / (float)height, 0.1f, 1000.0f);
 	glm::mat4 view = camera->GetViewMatrix();
 	ssaoPassShader->setFloat("colorInterval", colorInterval);
 	ssaoPassShader->setFloat("radius", ssaoRadius);

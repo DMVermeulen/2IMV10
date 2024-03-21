@@ -75,6 +75,7 @@ void Application::initWindow() {
 	if (window == nullptr)
 		std::runtime_error("Create window failed!");
 	glfwMakeContextCurrent(window);
+	glfwSetFramebufferSizeCallback(window, window_size_update_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetScrollCallback(window, scroll_callback);
 	gladLoadGL();
@@ -100,11 +101,11 @@ void Application::initWindow() {
 }
 
 void Application::initRenderer() {
-	renderer.init();
 	renderer.setScene(&scene);
-	renderer.updateShadingPassInstanceInfo();
 	renderer.setCamera(&camera);
 	renderer.setViewportSize(SCR_WIDTH, SCR_HEIGHT);
+	renderer.init();
+	renderer.updateShadingPassInstanceInfo();
 }
 
 void Application::mainLoop() {
@@ -348,6 +349,15 @@ void Application::renderFrame() {
 	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	renderer.renderFrame();
 	//glfwSwapBuffers(window);
+}
+
+void Application::window_size_update_callback(GLFWwindow* window, int width, int height) {
+	m_app->SCR_WIDTH = width;
+	m_app->SCR_HEIGHT = height;
+	glViewport(0, 0, width, height);
+	//update renderer
+	m_app->renderer.updateViewportSize(width, height);
+
 }
 
 void Application::mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
