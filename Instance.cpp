@@ -4,44 +4,44 @@
 #include <glm/gtc/constants.hpp>
 #include<iostream>
 #include <algorithm>
-#include<cuda_runtime.h>
-#include<device_launch_parameters.h>
+//#include<cuda_runtime.h>
+//#include<device_launch_parameters.h>
 
-#ifdef __CUDACC__
-#define KERNEL_ARGS2(grid, block) <<< grid, block >>>
-#define KERNEL_ARGS3(grid, block, sh_mem) <<< grid, block, sh_mem >>>
-#define KERNEL_ARGS4(grid, block, sh_mem, stream) <<< grid, block, sh_mem, stream >>>
-#else
-#define KERNEL_ARGS2(grid, block)
-#define KERNEL_ARGS3(grid, block, sh_mem)
-#define KERNEL_ARGS4(grid, block, sh_mem, stream)
-#endif
+//#ifdef __CUDACC__
+//#define KERNEL_ARGS2(grid, block) <<< grid, block >>>
+//#define KERNEL_ARGS3(grid, block, sh_mem) <<< grid, block, sh_mem >>>
+//#define KERNEL_ARGS4(grid, block, sh_mem, stream) <<< grid, block, sh_mem, stream >>>
+//#else
+//#define KERNEL_ARGS2(grid, block)
+//#define KERNEL_ARGS3(grid, block, sh_mem)
+//#define KERNEL_ARGS4(grid, block, sh_mem, stream)
+//#endif
 
 #define INFINITE 999999999
 
-extern "C" void cuda_voxelCount(
-	float* oriTubesData,     
-	int* voxelCountData,    
-	int totalSize, int nVoxels_X, int nVoxels_Y, int nVoxels_Z, float3 aabbMin, float voxelUnitSize  //other parameters
-);
-
-extern "C" void cuda_densityEstimation(
-	int* voxelCountData,
-	float* denseMapData,
-	int totalSize, int nVoxels_X, int nVoxels_Y, int nVoxels_Z, int kernelR, float voxelUnitSize
-);
-
-extern "C" void cuda_advection(
-	float* oriTubesData, float* tempNormalsData, float* denseMapData,  //read from
-	float* updatedTubesData,                       //write to
-	int totalSize, int nVoxels_X, int nVoxels_Y, int nVoxels_Z, int kernelR, float voxelUnitSize, float3 aabbMin, int totalVoxels
-);
-
-extern "C" void cuda_relaxation(
-	float* tempTubesData, float* smoothedTubesData,
-	float* relaxedTubesData,
-	int totalSize, float relaxFactor
-);
+//extern "C" void cuda_voxelCount(
+//	float* oriTubesData,     
+//	int* voxelCountData,    
+//	int totalSize, int nVoxels_X, int nVoxels_Y, int nVoxels_Z, float3 aabbMin, float voxelUnitSize  //other parameters
+//);
+//
+//extern "C" void cuda_densityEstimation(
+//	int* voxelCountData,
+//	float* denseMapData,
+//	int totalSize, int nVoxels_X, int nVoxels_Y, int nVoxels_Z, int kernelR, float voxelUnitSize
+//);
+//
+//extern "C" void cuda_advection(
+//	float* oriTubesData, float* tempNormalsData, float* denseMapData,  //read from
+//	float* updatedTubesData,                       //write to
+//	int totalSize, int nVoxels_X, int nVoxels_Y, int nVoxels_Z, int kernelR, float voxelUnitSize, float3 aabbMin, int totalVoxels
+//);
+//
+//extern "C" void cuda_relaxation(
+//	float* tempTubesData, float* smoothedTubesData,
+//	float* relaxedTubesData,
+//	int totalSize, float relaxFactor
+//);
 
 Instance::Instance(std::string path, float radius, int nTris)
 	://denseEstimationShader1D("shaders/denseEstimation.cs")
@@ -1091,137 +1091,137 @@ void Instance::initLineDirections() {
 	}
 }
 
-void Instance::initCudaMemory() {
-	//temp tracks
-	cudaMalloc((void**)&d_tempTubes, tubes.size() * 6 * sizeof(float));
-
-	//updated tracks
-	cudaMalloc((void**)&d_updatedTubes, tubes.size() * 6 * sizeof(float));
-
-	//smoothed tracks
-	cudaMalloc((void**)&d_smoothedTubes, tubes.size() * 6 * sizeof(float));
-
-	//relaxed tracks
-	cudaMalloc((void**)&d_relaxedTubes, tubes.size() * 6 * sizeof(float));
-
-	//temp normals
-	cudaMalloc((void**)&d_tempNormals, tubes.size() * 6 * sizeof(float));
-
-	//updated normals
-	cudaMalloc((void**)&d_updatedNormals, tubes.size() * 6 * sizeof(float));
-
-	//temp directions
-	cudaMalloc((void**)&d_tempDirections, tubes.size() * 6 * sizeof(float));
-
-	//updated directions
-	cudaMalloc((void**)&d_updatedDirections, tubes.size() * 6 * sizeof(float));
-
-	//voxelCount (1-D buffer)
-	cudaMalloc((void**)&d_voxelCount, totalVoxels * sizeof(int));
-
-	//denseMap (1-D buffer)
-	cudaMalloc((void**)&d_denseMap, totalVoxels * sizeof(float));
-
-	//isFiberEndpoint
-	cudaMalloc((void**)&d_isFiberEndpoint, isFiberEndpoint.size() * sizeof(int));
-
-}
-
-void Instance::edgeBundlingCUDA(float p, float radius, int nTris) {
-	int kernelR = p * nVoxels_Z;
-	float3 aabbMin = make_float3(aabb.minPos.x, aabb.minPos.y, aabb.minPos.z);
-
-    //init texTempTubes with original tubes
-	cudaMemcpy(d_tempTubes, tubes.data(), tubes.size() * 6 * sizeof(float), cudaMemcpyHostToDevice);
-
-	//init texTempNormals with original normals
-	cudaMemcpy(d_tempNormals, normals.data(), tubes.size() * 6 * sizeof(float), cudaMemcpyHostToDevice);
-
-	//init texTempDirections with original directions
-	cudaMemcpy(d_tempDirections, directions.data(), tubes.size() * 6 * sizeof(float), cudaMemcpyHostToDevice);
-
-	for (int i = 0; i < nIters; i++) {
-		//clear voxelCount at the beginning of each iteration
-		cudaMemset(d_voxelCount, 0, totalVoxels * sizeof(int));
-		cudaDeviceSynchronize();
-
-		//voxelCount
-		cuda_voxelCount(d_tempTubes, d_voxelCount, 2 * tubes.size(),nVoxels_X,nVoxels_Y,nVoxels_Z, aabbMin,voxelUnitSize);
-		cudaDeviceSynchronize();
-
-		//densityEstimation
-		cuda_densityEstimation(d_voxelCount, d_denseMap, totalVoxels, nVoxels_X, nVoxels_Y, nVoxels_Z, kernelR, voxelUnitSize);
-		cudaDeviceSynchronize();
-
-		//advection
-		cuda_advection(d_tempTubes, d_tempNormals, d_denseMap, d_updatedTubes, 2 * tubes.size(), nVoxels_X, nVoxels_Y, nVoxels_Z, kernelR, voxelUnitSize, aabbMin, totalVoxels);
-		cudaDeviceSynchronize();
-
-		//smooth (TO DO), simply copy from updated to smoothed currently
-		//smoothPass(p);
-		cudaMemcpy(d_smoothedTubes, d_updatedTubes, tubes.size() * 6 * sizeof(float), cudaMemcpyHostToDevice);
-		cudaDeviceSynchronize();
-		
-		//re-transfer original tracks to texTempTubes, for relaxation pass
-		cudaMemcpy(d_tempTubes, tubes.data(), tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToDevice);
-		cudaDeviceSynchronize();
-
-		//relaxation
-		cuda_relaxation(d_tempTubes, d_smoothedTubes, d_relaxedTubes, 2 * tubes.size(), relaxFactor);
-		cudaDeviceSynchronize();
-
-		//forceConsective (TO DO)
-		//forceConsecutivePass();
-
-		//update directions (TO DO)
-		//updateDirectionPass();
-		cudaMemcpy(d_updatedDirections, d_tempDirections, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToDevice);
-		cudaDeviceSynchronize();
-
-		//update normals (TO DO)
-		//updateNormalPass();
-		cudaMemcpy(d_updatedNormals, d_tempNormals, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToDevice);
-		cudaDeviceSynchronize();
-
-		//transfer data to temp buffers
-		cudaMemcpy(d_tempTubes, d_relaxedTubes, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToDevice);
-		cudaMemcpy(d_tempDirections, d_updatedDirections, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToDevice);
-		cudaMemcpy(d_tempNormals, d_updatedNormals, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToDevice);
-		cudaDeviceSynchronize();
-	}
-	//update vertex buffer
-	float* h_relaxedTubes = (float*)malloc(tubes.size() * 6 * sizeof(float));
-	float* h_updatedDirections = (float*)malloc(tubes.size() * 6 * sizeof(float));
-	float* h_udatedNormals = (float*)malloc(tubes.size() * 6 * sizeof(float));
-
-	cudaMemcpy(h_relaxedTubes, d_relaxedTubes, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToHost);
-	cudaMemcpy(h_updatedDirections, d_updatedDirections, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToHost);
-	cudaMemcpy(h_udatedNormals, d_updatedNormals, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToHost);
-	cudaDeviceSynchronize();
-
-	transferDataHostToGL(h_relaxedTubes, VBOLines, tubes.size() * 6 * sizeof(float));
-	transferDataHostToGL(h_updatedDirections, DBOLines, tubes.size() * 6 * sizeof(float));
-	transferDataHostToGL(h_udatedNormals, NBOLines, tubes.size() * 6 * sizeof(float));
-
-	//DEBUG
-	int* h_debug_int = (int*)malloc(totalVoxels * sizeof(int));
-	cudaMemcpy(h_debug_int, d_voxelCount, totalVoxels * sizeof(int), cudaMemcpyDeviceToHost);
-	//for (int i = 0; i < totalVoxels; i++) {
-	//	if(h_debug_int[i]>0)
-	//	std::cout << h_debug_int[i];
-	//}
-}
-
-void Instance::transferDataHostToGL(void* hostMem, GLuint glBuffer, size_t copySize) {
-	glBindBuffer(GL_TEXTURE_BUFFER, glBuffer);
-	glBufferData(GL_TEXTURE_BUFFER, copySize, hostMem, GL_STATIC_DRAW);
-
-	// Unbind buffers
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	//For synchronization
-	glMemoryBarrier(GL_ALL_BARRIER_BITS);
-}
+//void Instance::initCudaMemory() {
+//	//temp tracks
+//	cudaMalloc((void**)&d_tempTubes, tubes.size() * 6 * sizeof(float));
+//
+//	//updated tracks
+//	cudaMalloc((void**)&d_updatedTubes, tubes.size() * 6 * sizeof(float));
+//
+//	//smoothed tracks
+//	cudaMalloc((void**)&d_smoothedTubes, tubes.size() * 6 * sizeof(float));
+//
+//	//relaxed tracks
+//	cudaMalloc((void**)&d_relaxedTubes, tubes.size() * 6 * sizeof(float));
+//
+//	//temp normals
+//	cudaMalloc((void**)&d_tempNormals, tubes.size() * 6 * sizeof(float));
+//
+//	//updated normals
+//	cudaMalloc((void**)&d_updatedNormals, tubes.size() * 6 * sizeof(float));
+//
+//	//temp directions
+//	cudaMalloc((void**)&d_tempDirections, tubes.size() * 6 * sizeof(float));
+//
+//	//updated directions
+//	cudaMalloc((void**)&d_updatedDirections, tubes.size() * 6 * sizeof(float));
+//
+//	//voxelCount (1-D buffer)
+//	cudaMalloc((void**)&d_voxelCount, totalVoxels * sizeof(int));
+//
+//	//denseMap (1-D buffer)
+//	cudaMalloc((void**)&d_denseMap, totalVoxels * sizeof(float));
+//
+//	//isFiberEndpoint
+//	cudaMalloc((void**)&d_isFiberEndpoint, isFiberEndpoint.size() * sizeof(int));
+//
+//}
+//
+//void Instance::edgeBundlingCUDA(float p, float radius, int nTris) {
+//	int kernelR = p * nVoxels_Z;
+//	float3 aabbMin = make_float3(aabb.minPos.x, aabb.minPos.y, aabb.minPos.z);
+//
+//    //init texTempTubes with original tubes
+//	cudaMemcpy(d_tempTubes, tubes.data(), tubes.size() * 6 * sizeof(float), cudaMemcpyHostToDevice);
+//
+//	//init texTempNormals with original normals
+//	cudaMemcpy(d_tempNormals, normals.data(), tubes.size() * 6 * sizeof(float), cudaMemcpyHostToDevice);
+//
+//	//init texTempDirections with original directions
+//	cudaMemcpy(d_tempDirections, directions.data(), tubes.size() * 6 * sizeof(float), cudaMemcpyHostToDevice);
+//
+//	for (int i = 0; i < nIters; i++) {
+//		//clear voxelCount at the beginning of each iteration
+//		cudaMemset(d_voxelCount, 0, totalVoxels * sizeof(int));
+//		cudaDeviceSynchronize();
+//
+//		//voxelCount
+//		cuda_voxelCount(d_tempTubes, d_voxelCount, 2 * tubes.size(),nVoxels_X,nVoxels_Y,nVoxels_Z, aabbMin,voxelUnitSize);
+//		cudaDeviceSynchronize();
+//
+//		//densityEstimation
+//		cuda_densityEstimation(d_voxelCount, d_denseMap, totalVoxels, nVoxels_X, nVoxels_Y, nVoxels_Z, kernelR, voxelUnitSize);
+//		cudaDeviceSynchronize();
+//
+//		//advection
+//		cuda_advection(d_tempTubes, d_tempNormals, d_denseMap, d_updatedTubes, 2 * tubes.size(), nVoxels_X, nVoxels_Y, nVoxels_Z, kernelR, voxelUnitSize, aabbMin, totalVoxels);
+//		cudaDeviceSynchronize();
+//
+//		//smooth (TO DO), simply copy from updated to smoothed currently
+//		//smoothPass(p);
+//		cudaMemcpy(d_smoothedTubes, d_updatedTubes, tubes.size() * 6 * sizeof(float), cudaMemcpyHostToDevice);
+//		cudaDeviceSynchronize();
+//		
+//		//re-transfer original tracks to texTempTubes, for relaxation pass
+//		cudaMemcpy(d_tempTubes, tubes.data(), tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToDevice);
+//		cudaDeviceSynchronize();
+//
+//		//relaxation
+//		cuda_relaxation(d_tempTubes, d_smoothedTubes, d_relaxedTubes, 2 * tubes.size(), relaxFactor);
+//		cudaDeviceSynchronize();
+//
+//		//forceConsective (TO DO)
+//		//forceConsecutivePass();
+//
+//		//update directions (TO DO)
+//		//updateDirectionPass();
+//		cudaMemcpy(d_updatedDirections, d_tempDirections, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToDevice);
+//		cudaDeviceSynchronize();
+//
+//		//update normals (TO DO)
+//		//updateNormalPass();
+//		cudaMemcpy(d_updatedNormals, d_tempNormals, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToDevice);
+//		cudaDeviceSynchronize();
+//
+//		//transfer data to temp buffers
+//		cudaMemcpy(d_tempTubes, d_relaxedTubes, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToDevice);
+//		cudaMemcpy(d_tempDirections, d_updatedDirections, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToDevice);
+//		cudaMemcpy(d_tempNormals, d_updatedNormals, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToDevice);
+//		cudaDeviceSynchronize();
+//	}
+//	//update vertex buffer
+//	float* h_relaxedTubes = (float*)malloc(tubes.size() * 6 * sizeof(float));
+//	float* h_updatedDirections = (float*)malloc(tubes.size() * 6 * sizeof(float));
+//	float* h_udatedNormals = (float*)malloc(tubes.size() * 6 * sizeof(float));
+//
+//	cudaMemcpy(h_relaxedTubes, d_relaxedTubes, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToHost);
+//	cudaMemcpy(h_updatedDirections, d_updatedDirections, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToHost);
+//	cudaMemcpy(h_udatedNormals, d_updatedNormals, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToHost);
+//	cudaDeviceSynchronize();
+//
+//	transferDataHostToGL(h_relaxedTubes, VBOLines, tubes.size() * 6 * sizeof(float));
+//	transferDataHostToGL(h_updatedDirections, DBOLines, tubes.size() * 6 * sizeof(float));
+//	transferDataHostToGL(h_udatedNormals, NBOLines, tubes.size() * 6 * sizeof(float));
+//
+//	//DEBUG
+//	int* h_debug_int = (int*)malloc(totalVoxels * sizeof(int));
+//	cudaMemcpy(h_debug_int, d_voxelCount, totalVoxels * sizeof(int), cudaMemcpyDeviceToHost);
+//	//for (int i = 0; i < totalVoxels; i++) {
+//	//	if(h_debug_int[i]>0)
+//	//	std::cout << h_debug_int[i];
+//	//}
+//}
+//
+//void Instance::transferDataHostToGL(void* hostMem, GLuint glBuffer, size_t copySize) {
+//	glBindBuffer(GL_TEXTURE_BUFFER, glBuffer);
+//	glBufferData(GL_TEXTURE_BUFFER, copySize, hostMem, GL_STATIC_DRAW);
+//
+//	// Unbind buffers
+//	glBindBuffer(GL_ARRAY_BUFFER, 0);
+//
+//	//For synchronization
+//	glMemoryBarrier(GL_ALL_BARRIER_BITS);
+//}
 
 //DEBUG
 void Instance::testSmoothing() {

@@ -73,23 +73,23 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.6\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.6\lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.6\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.6\lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.6\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.6\lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.6\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.6\lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -104,7 +104,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>"D:\DevTools\libraries for Vulkan\GLFW\glfw-3.3.8.bin.WIN64\lib-vc2017";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glfw3.lib;cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CudaCompile>
       <CodeGeneration>compute_80,sm_80</CodeGeneration>
@@ -123,7 +123,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>"D:\DevTools\libraries for Vulkan\GLFW\glfw-3.3.8.bin.WIN64\lib-vc2017";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glfw3.lib;cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CudaCompile>
       <CodeGeneration>compute_80,sm_80</CodeGeneration>
@@ -146,7 +146,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>"D:\DevTools\libraries for Vulkan\GLFW\glfw-3.3.8.bin.WIN64\lib-vc2017";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glfw3.lib;cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CudaCompile>
       <CodeGeneration>compute_80,sm_80</CodeGeneration>
@@ -169,7 +169,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>"D:\DevTools\libraries for Vulkan\GLFW\glfw-3.3.8.bin.WIN64\lib-vc2017";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glfw3.lib;cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CudaCompile>
       <CodeGeneration>compute_80,sm_80</CodeGeneration>

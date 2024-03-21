@@ -154,21 +154,21 @@ private:
 	float metallic=0.8f;
 
 
-	//TEST
-	// CUDA related
-	//pointers to GPU memory
-	int* d_voxelCount;
-	float* d_denseMap;
-	float* d_tempTubes;
-	float* d_updatedTubes;
-	float* d_smoothedTubes;
-	float* d_relaxedTubes;
-	int* d_isFiberEndpoint;
-	float* d_tempNormals;
-	float* d_updatedNormals;
-	float* d_tempDirections;
-	float* d_updatedDirections;
-	void initCudaMemory();
-	void transferDataHostToGL(void* hostMem, GLuint glBuffer, size_t copySize);
+	////TEST
+	//// CUDA related
+	////pointers to GPU memory
+	//int* d_voxelCount;
+	//float* d_denseMap;
+	//float* d_tempTubes;
+	//float* d_updatedTubes;
+	//float* d_smoothedTubes;
+	//float* d_relaxedTubes;
+	//int* d_isFiberEndpoint;
+	//float* d_tempNormals;
+	//float* d_updatedNormals;
+	//float* d_tempDirections;
+	//float* d_updatedDirections;
+	//void initCudaMemory();
+	//void transferDataHostToGL(void* hostMem, GLuint glBuffer, size_t copySize);
 
 };
