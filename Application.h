@@ -22,6 +22,7 @@ public:
 	static Application* m_app;
 	//UI operations
 private:
+	bool suspendRender=false;
 	//self pointer (used by static method)
 	//UI related
 	ImGuiIO io;
@@ -54,6 +55,7 @@ private:
 	static void window_size_update_callback(GLFWwindow* window, int width, int height);
 	static void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
 	static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+	static void window_iconify_callback(GLFWwindow* window, int iconified);
 
 	//UI related
 	void renderUI();

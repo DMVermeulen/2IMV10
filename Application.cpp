@@ -78,6 +78,7 @@ void Application::initWindow() {
 	glfwSetFramebufferSizeCallback(window, window_size_update_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetScrollCallback(window, scroll_callback);
+	glfwSetWindowIconifyCallback(window, window_iconify_callback);
 	gladLoadGL();
 	glfwSwapInterval(1); // Enable vsync
 
@@ -140,7 +141,8 @@ void Application::mainLoop() {
 		glViewport(0, 0, display_w, display_h);
 		glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
 		glClear(GL_COLOR_BUFFER_BIT);
-		renderFrame();
+		if(!suspendRender)
+		  renderFrame();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		glfwSwapBuffers(window);
@@ -356,7 +358,8 @@ void Application::window_size_update_callback(GLFWwindow* window, int width, int
 	m_app->SCR_HEIGHT = height;
 	glViewport(0, 0, width, height);
 	//update renderer
-	m_app->renderer.updateViewportSize(width, height);
+	if(width>0 && height>0)
+	 m_app->renderer.updateViewportSize(width, height);
 
 }
 
@@ -406,5 +409,17 @@ void Application::scroll_callback(GLFWwindow* window, double xoffset, double yof
 {
 	m_app->camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
+
+void Application::window_iconify_callback(GLFWwindow* window, int iconified) {
+	if (iconified) {
+		// window was minimized
+		m_app->suspendRender = true;
+	}
+	else {
+		// window was restored from minimized state
+		m_app->suspendRender = false;
+	}
+}
+
 
 

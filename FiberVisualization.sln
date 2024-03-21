@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.34112.143
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.34301.259
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FiberVisualization", "FiberVisualization.vcxproj", "{3E3FBFBB-CA8D-4BF9-8AF7-39DC944FF1F6}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "FiberAppTest", "..\..\courseProjects\visual computing\FiberAppTest\FiberAppTest.vdproj", "{E10B9B92-48DC-486B-9713-66D4CF847B57}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{3E3FBFBB-CA8D-4BF9-8AF7-39DC944FF1F6}.Release|x64.Build.0 = Release|x64
 		{3E3FBFBB-CA8D-4BF9-8AF7-39DC944FF1F6}.Release|x86.ActiveCfg = Release|Win32
 		{3E3FBFBB-CA8D-4BF9-8AF7-39DC944FF1F6}.Release|x86.Build.0 = Release|Win32
+		{E10B9B92-48DC-486B-9713-66D4CF847B57}.Debug|x64.ActiveCfg = Debug
+		{E10B9B92-48DC-486B-9713-66D4CF847B57}.Debug|x86.ActiveCfg = Debug
+		{E10B9B92-48DC-486B-9713-66D4CF847B57}.Release|x64.ActiveCfg = Release
+		{E10B9B92-48DC-486B-9713-66D4CF847B57}.Release|x86.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
