@@ -3,10 +3,12 @@
 
 Application* Application::m_app = nullptr;
 
-Application::Application(Scene& _scene):scene(_scene){
+Application::Application(){
 	m_app = this;
 	float lastX = (float)SCR_WIDTH / 2.0;
 	float lastY = (float)SCR_HEIGHT / 2.0;
+
+
 }
 
 Application::~Application() {
@@ -27,14 +29,11 @@ void Application::run() {
 }
 
 void Application::initScene() {
+	scene.initComputeShaders();
 	scene.addInstance("models\\whole_brain.tck"); 
 	scene.addInstance("models\\AF_left.tck");
 	scene.setActivatedInstance(0);
-	scene.removeInstance(0);
-
-	//test
-	//scene.updateInstanceEnableSlicing();
-	scene.slicing(glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
+	//scene.removeInstance(0);
 }
 
 

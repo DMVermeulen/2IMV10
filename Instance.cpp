@@ -43,19 +43,33 @@
 //	int totalSize, float relaxFactor
 //);
 
-Instance::Instance(std::string path, float radius, int nTris)
-	://denseEstimationShader1D("shaders/denseEstimation.cs")
-	denseEstimationShaderX("shaders/denseEstimationX.cs"),
-	denseEstimationShaderY("shaders/denseEstimationY.cs"),
-	denseEstimationShaderZ("shaders/denseEstimationZ.cs"),
-	advectionShader("shaders/advection.cs"),
-    voxelCountShader("shaders/voxelCount.cs"),
-    smoothShader("shaders/smooth.cs"),
-	relaxShader("shaders/relaxation.cs"), 
-	updateDirectionShader("shaders/updateDirections.cs"), 
-	updateNormalShader("shaders/updateNormals.cs"),
-	forceConsecutiveShader("shaders/forceConsecutive.cs"),
-	slicingShader("shaders/slicing.cs"){
+Instance::Instance(
+	std::string path,
+	std::shared_ptr<ComputeShader> _voxelCountShader,
+	std::shared_ptr<ComputeShader> _denseEstimationShaderX,
+	std::shared_ptr<ComputeShader> _denseEstimationShaderY,
+	std::shared_ptr<ComputeShader> _denseEstimationShaderZ,
+	std::shared_ptr<ComputeShader> _advectionShader,
+	std::shared_ptr<ComputeShader> _smoothShader,
+	std::shared_ptr<ComputeShader> _relaxShader,
+	std::shared_ptr<ComputeShader> _updateDirectionShader,
+	std::shared_ptr<ComputeShader> _updateNormalShader,
+	std::shared_ptr<ComputeShader> _forceConsecutiveShader,
+	std::shared_ptr<ComputeShader> _slicingShader
+)
+	//:denseEstimationShader1D("shaders/denseEstimation.cs")
+	:voxelCountShader(_voxelCountShader),
+	denseEstimationShaderX(_denseEstimationShaderX),
+	denseEstimationShaderY(_denseEstimationShaderY),
+	denseEstimationShaderZ(_denseEstimationShaderZ),
+	advectionShader(_advectionShader),
+	smoothShader(_smoothShader),
+	relaxShader(_relaxShader),
+	updateDirectionShader(_updateDirectionShader),
+	updateNormalShader(_updateNormalShader),
+	forceConsecutiveShader(_forceConsecutiveShader),
+	slicingShader(_slicingShader)
+{
 	loadTracksFromTCK(path);
 	spaceVoxelization();
 	trackResampling();
@@ -756,14 +770,14 @@ void Instance::voxelCountPass() {
 	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, debugFLOAT);
 	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, texIsFiberEndpoint);
 
-	voxelCountShader.use();
-	voxelCountShader.setInt("totalSize", 2 * tubes.size());
-	voxelCountShader.setInt("nVoxels_X", nVoxels_X);
-	voxelCountShader.setInt("nVoxels_Y", nVoxels_Y);
-	voxelCountShader.setInt("nVoxels_Z", nVoxels_Z);
-	voxelCountShader.setVec3("aabbMin", aabb.minPos);
-	voxelCountShader.setFloat("voxelUnitSize", voxelUnitSize);
-	voxelCountShader.setInt("totalVoxels", totalVoxels);
+	voxelCountShader->use();
+	voxelCountShader->setInt("totalSize", 2 * tubes.size());
+	voxelCountShader->setInt("nVoxels_X", nVoxels_X);
+	voxelCountShader->setInt("nVoxels_Y", nVoxels_Y);
+	voxelCountShader->setInt("nVoxels_Z", nVoxels_Z);
+	voxelCountShader->setVec3("aabbMin", aabb.minPos);
+	voxelCountShader->setFloat("voxelUnitSize", voxelUnitSize);
+	voxelCountShader->setInt("totalVoxels", totalVoxels);
 
 	glDispatchCompute(1 + (unsigned int)2*tubes.size() / 128, 1, 1);
 
@@ -809,35 +823,35 @@ void Instance::denseEstimationPass(float p) {
 	//glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 	//Convolution on X
-	denseEstimationShaderX.use();
-	denseEstimationShaderX.setInt("totalSize", totalVoxels);
-	denseEstimationShaderX.setInt("nVoxels_X", nVoxels_X);
-	denseEstimationShaderX.setInt("nVoxels_Y", nVoxels_Y);
-	denseEstimationShaderX.setInt("nVoxels_Z", nVoxels_Z);
-	denseEstimationShaderX.setInt("kernelR", p * nVoxels_Z);
-	denseEstimationShaderX.setFloat("voxelUnitSize", voxelUnitSize);
+	denseEstimationShaderX->use();
+	denseEstimationShaderX->setInt("totalSize", totalVoxels);
+	denseEstimationShaderX->setInt("nVoxels_X", nVoxels_X);
+	denseEstimationShaderX->setInt("nVoxels_Y", nVoxels_Y);
+	denseEstimationShaderX->setInt("nVoxels_Z", nVoxels_Z);
+	denseEstimationShaderX->setInt("kernelR", p * nVoxels_Z);
+	denseEstimationShaderX->setFloat("voxelUnitSize", voxelUnitSize);
 	glDispatchCompute(1 + (unsigned int)totalVoxels / 128, 1, 1);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 	//Convolution on Y
-	denseEstimationShaderY.use();
-	denseEstimationShaderY.setInt("totalSize", totalVoxels);
-	denseEstimationShaderY.setInt("nVoxels_X", nVoxels_X);
-	denseEstimationShaderY.setInt("nVoxels_Y", nVoxels_Y);
-	denseEstimationShaderY.setInt("nVoxels_Z", nVoxels_Z);
-	denseEstimationShaderY.setInt("kernelR", p * nVoxels_Z);
-	denseEstimationShaderY.setFloat("voxelUnitSize", voxelUnitSize);
+	denseEstimationShaderY->use();
+	denseEstimationShaderY->setInt("totalSize", totalVoxels);
+	denseEstimationShaderY->setInt("nVoxels_X", nVoxels_X);
+	denseEstimationShaderY->setInt("nVoxels_Y", nVoxels_Y);
+	denseEstimationShaderY->setInt("nVoxels_Z", nVoxels_Z);
+	denseEstimationShaderY->setInt("kernelR", p * nVoxels_Z);
+	denseEstimationShaderY->setFloat("voxelUnitSize", voxelUnitSize);
 	glDispatchCompute(1 + (unsigned int)totalVoxels / 128, 1, 1);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 	//Convolution on Z
-	denseEstimationShaderZ.use();
-	denseEstimationShaderZ.setInt("totalSize", totalVoxels);
-	denseEstimationShaderZ.setInt("nVoxels_X", nVoxels_X);
-	denseEstimationShaderZ.setInt("nVoxels_Y", nVoxels_Y);
-	denseEstimationShaderZ.setInt("nVoxels_Z", nVoxels_Z);
-	denseEstimationShaderZ.setInt("kernelR", p * nVoxels_Z);
-	denseEstimationShaderZ.setFloat("voxelUnitSize", voxelUnitSize);
+	denseEstimationShaderZ->use();
+	denseEstimationShaderZ->setInt("totalSize", totalVoxels);
+	denseEstimationShaderZ->setInt("nVoxels_X", nVoxels_X);
+	denseEstimationShaderZ->setInt("nVoxels_Y", nVoxels_Y);
+	denseEstimationShaderZ->setInt("nVoxels_Z", nVoxels_Z);
+	denseEstimationShaderZ->setInt("kernelR", p * nVoxels_Z);
+	denseEstimationShaderZ->setFloat("voxelUnitSize", voxelUnitSize);
 	glDispatchCompute(1 + (unsigned int)totalVoxels / 128, 1, 1);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 }
@@ -852,15 +866,15 @@ void Instance::advectionPass(float p) {
 	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, debugFLOAT);
 	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 9, texTempNormals);
 
-	advectionShader.use();
-	advectionShader.setInt("totalSize", 2*tubes.size());
-	advectionShader.setInt("nVoxels_X", nVoxels_X);
-	advectionShader.setInt("nVoxels_Y", nVoxels_Y);
-	advectionShader.setInt("nVoxels_Z", nVoxels_Z);
-	advectionShader.setInt("kernelR", p*nVoxels_Z);
-	advectionShader.setFloat("voxelUnitSize", voxelUnitSize);
-	advectionShader.setVec3("aabbMin", aabb.minPos);
-	advectionShader.setInt("totalVoxels", totalVoxels);
+	advectionShader->use();
+	advectionShader->setInt("totalSize", 2*tubes.size());
+	advectionShader->setInt("nVoxels_X", nVoxels_X);
+	advectionShader->setInt("nVoxels_Y", nVoxels_Y);
+	advectionShader->setInt("nVoxels_Z", nVoxels_Z);
+	advectionShader->setInt("kernelR", p*nVoxels_Z);
+	advectionShader->setFloat("voxelUnitSize", voxelUnitSize);
+	advectionShader->setVec3("aabbMin", aabb.minPos);
+	advectionShader->setInt("totalVoxels", totalVoxels);
 	glDispatchCompute(1 + (unsigned int)2*tubes.size() / 128, 1, 1);
 
 	// make sure writing to buffer has finished before read
@@ -877,11 +891,11 @@ void Instance::smoothPass(float p) {
 	int smoothL = p * nVoxels_Z;
 	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, texSmoothedTubes);
 
-	smoothShader.use();
-	smoothShader.setInt("totalSize", 2 * tubes.size());
-	smoothShader.setFloat("smoothFactor",smoothFactor);
-	smoothShader.setInt("smoothL", smoothL);
-	smoothShader.setFloat("voxelUnitSize", voxelUnitSize);
+	smoothShader->use();
+	smoothShader->setInt("totalSize", 2 * tubes.size());
+	smoothShader->setFloat("smoothFactor",smoothFactor);
+	smoothShader->setInt("smoothL", smoothL);
+	smoothShader->setFloat("voxelUnitSize", voxelUnitSize);
 
 	glDispatchCompute(1 + (unsigned int)2 * tubes.size() / 128, 1, 1);
 
@@ -899,9 +913,9 @@ void Instance::relaxationPass() {
 	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texTempTubes);
 	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, texRelaxedTubes);
 
-	relaxShader.use();
-	relaxShader.setInt("totalSize", 2 * tubes.size());
-	relaxShader.setFloat("relaxFactor", relaxFactor);
+	relaxShader->use();
+	relaxShader->setInt("totalSize", 2 * tubes.size());
+	relaxShader->setFloat("relaxFactor", relaxFactor);
 
 	glDispatchCompute(1 + (unsigned int)2 * tubes.size() / 128, 1, 1);
 
@@ -918,8 +932,8 @@ void Instance::relaxationPass() {
 void Instance::updateDirectionPass() {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 10, texUpdatedDirections);
 
-	updateDirectionShader.use();
-	updateDirectionShader.setInt("totalSize", 2 * tubes.size());
+	updateDirectionShader->use();
+	updateDirectionShader->setInt("totalSize", 2 * tubes.size());
 
 	glDispatchCompute(1 + (unsigned int)2 * tubes.size() / 128, 1, 1);
 
@@ -929,8 +943,8 @@ void Instance::updateDirectionPass() {
 void Instance::updateNormalPass() {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 11, texUpdatedNormals);
 
-	updateNormalShader.use();
-	updateNormalShader.setInt("totalSize", 2 * tubes.size());
+	updateNormalShader->use();
+	updateNormalShader->setInt("totalSize", 2 * tubes.size());
 
 	glDispatchCompute(1 + (unsigned int)2 * tubes.size() / 128, 1, 1);
 
@@ -938,8 +952,8 @@ void Instance::updateNormalPass() {
 }
 
 void Instance::forceConsecutivePass() {
-	forceConsecutiveShader.use();
-	forceConsecutiveShader.setInt("totalSize", 2 * tubes.size());
+	forceConsecutiveShader->use();
+	forceConsecutiveShader->setInt("totalSize", 2 * tubes.size());
 
 	glDispatchCompute(1 + (unsigned int)2 * tubes.size() / 128, 1, 1);
 
@@ -1157,11 +1171,11 @@ void Instance::testSmoothing() {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, texIsFiberEndpoint);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, texSmoothedTubes);
 
-	smoothShader.use();
-	smoothShader.setInt("totalSize", 2 * tubes.size());
-	smoothShader.setFloat("smoothFactor", smoothFactor);
-	smoothShader.setInt("smoothL", smoothL);
-	smoothShader.setFloat("voxelUnitSize", voxelUnitSize);
+	smoothShader->use();
+	smoothShader->setInt("totalSize", 2 * tubes.size());
+	smoothShader->setFloat("smoothFactor", smoothFactor);
+	smoothShader->setInt("smoothL", smoothL);
+	smoothShader->setFloat("voxelUnitSize", voxelUnitSize);
 
 	glDispatchCompute(1 + (unsigned int)2 * tubes.size() / 128, 1, 1);
 
@@ -1212,10 +1226,10 @@ void Instance::slicing(glm::vec3 pos, glm::vec3 dir) {
 	slicingPos = pos;
 	slicingDir = dir;
 
-	slicingShader.use();
-	slicingShader.setInt("totalSize", tubes.size());
-	slicingShader.setVec3("pos", slicingPos);
-	slicingShader.setVec3("dir", dir);
+	slicingShader->use();
+	slicingShader->setInt("totalSize", tubes.size());
+	slicingShader->setVec3("pos", slicingPos);
+	slicingShader->setVec3("dir", dir);
 
 	glDispatchCompute(1 + (unsigned int)tubes.size() / 128, 1, 1);
 

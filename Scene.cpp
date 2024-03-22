@@ -8,8 +8,35 @@ Scene::~Scene() {
 
 }
 
+void Scene::initComputeShaders() {
+	denseEstimationShaderX = new ComputeShader("shaders/denseEstimationX.cs") ;
+	denseEstimationShaderY = new ComputeShader("shaders/denseEstimationY.cs");
+	denseEstimationShaderZ = new ComputeShader("shaders/denseEstimationZ.cs");
+	advectionShader = new ComputeShader("shaders/advection.cs");
+	voxelCountShader = new ComputeShader("shaders/voxelCount.cs");
+	smoothShader = new ComputeShader("shaders/smooth.cs");
+	relaxShader = new ComputeShader("shaders/relaxation.cs");
+	updateDirectionShader = new ComputeShader("shaders/updateDirections.cs");
+	updateNormalShader = new ComputeShader("shaders/updateNormals.cs");
+	forceConsecutiveShader = new ComputeShader("shaders/forceConsecutive.cs");
+	slicingShader = new ComputeShader("shaders/slicing.cs");
+}
+
 void Scene::addInstance(std::string filePath) {
-	instances.push_back(Instance(filePath, radius, nTris));
+	instances.push_back(Instance(
+		filePath,
+		std::make_shared<ComputeShader>(*voxelCountShader),
+		std::make_shared<ComputeShader>(*denseEstimationShaderX),
+		std::make_shared<ComputeShader>(*denseEstimationShaderY),
+		std::make_shared<ComputeShader>(*denseEstimationShaderZ),
+		std::make_shared<ComputeShader>(*advectionShader),
+		std::make_shared<ComputeShader>(*smoothShader),
+		std::make_shared<ComputeShader>(*relaxShader),
+		std::make_shared<ComputeShader>(*updateDirectionShader),
+		std::make_shared<ComputeShader>(*updateNormalShader),
+		std::make_shared<ComputeShader>(*forceConsecutiveShader),
+		std::make_shared<ComputeShader>(*slicingShader)
+	));
 }
 
 void Scene::removeInstance(int insId) {
@@ -44,28 +71,28 @@ void Scene::drawAllInstancesLineMode(float lineWidth) {
 	}
 }
 
-void Scene::setRadius(float r) {
-	radius = r;
-	updateMeshNewRadius();
-	
-}
+//void Scene::setRadius(float r) {
+//	radius = r;
+//	updateMeshNewRadius();
+//	
+//}
+//
+//void Scene::setNTris(int n) {
+//	nTris = n;
+//	updateMeshNewNTris();
+//}
 
-void Scene::setNTris(int n) {
-	nTris = n;
-	updateMeshNewNTris();
-}
-
-void Scene::updateMeshNewRadius() {
-	for (Instance& instance : instances) {
-		instance.recreateMeshNewRadius(radius, nTris);
-	}
-}
-
-void Scene::updateMeshNewNTris() {
-	for (Instance& instance : instances) {
-		instance.recreateMeshNewNTris(radius, nTris);
-	}
-}
+//void Scene::updateMeshNewRadius() {
+//	for (Instance& instance : instances) {
+//		instance.recreateMeshNewRadius(radius, nTris);
+//	}
+//}
+//
+//void Scene::updateMeshNewNTris() {
+//	for (Instance& instance : instances) {
+//		instance.recreateMeshNewNTris(radius, nTris);
+//	}
+//}
 
 void Scene::edgeBundling(float p, float radius, int nTris) {
 	//for (Instance& instance : instances) {

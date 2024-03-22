@@ -16,7 +16,7 @@
 
 class Application {
 public:
-	Application(Scene& scene);
+	Application();
 	~Application();
 	void run();
 	static Application* m_app;
@@ -36,7 +36,7 @@ private:
 	//A three-pass render
 	Renderer renderer;
 	//Scene shared by possibly multiple renderers
-	Scene& scene;
+	Scene scene;
 	//Camera related
 	Camera camera;
 	float deltaTime = 0.0f;

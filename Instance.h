@@ -9,7 +9,20 @@
 
 class Instance {
 public:
-	Instance(std::string path, float radius, int nTris);
+	Instance(
+		std::string path, 
+		std::shared_ptr<ComputeShader> voxelCountShader,
+		std::shared_ptr<ComputeShader> denseEstimationShaderX,
+		std::shared_ptr<ComputeShader> denseEstimationShaderY,
+		std::shared_ptr<ComputeShader> denseEstimationShaderZ,
+		std::shared_ptr<ComputeShader> advectionShader,
+		std::shared_ptr<ComputeShader> smoothShader,
+		std::shared_ptr<ComputeShader> relaxShader,
+		std::shared_ptr<ComputeShader> updateDirectionShader,
+		std::shared_ptr<ComputeShader> updateNormalShader,
+		std::shared_ptr<ComputeShader> forceConsecutiveShader,
+		std::shared_ptr<ComputeShader> slicingShader
+	);
 	~Instance();
 	int getNumberVertices();
 	int getNumberIndices();
@@ -84,9 +97,12 @@ private:
 	int totalVoxels;
 	AABB aabb;   //bounding box for the instance
 	int nIters = 15;  //number of iterations for edge bundling
-	const float smoothFactor = 0.99; 
+	//const float smoothFactor = 0.99; 
+	//float smoothL;
+	//const float relaxFactor = 0.85;
+	float smoothFactor = 0.99; 
 	float smoothL;
-	const float relaxFactor = 0.85;
+    float relaxFactor = 0.85;
 	std::vector<uint32_t> voxelAssignment; //persistently stored
 	std::vector<uint32_t> voxelOffset; 
 	std::vector<uint32_t> voxelSize; 
@@ -98,18 +114,6 @@ private:
 	//std::vector<float> computeDensity(float p);    //called every time when user-specified parameter changes (the kernel width)
 	//std::vector<glm::vec3> advection(std::vector<float>& denseMap,float p);   //called every time when user-specified parameter changes (the kernel width)
 	//std::vector<glm::vec3> smoothing(std::vector<glm::vec3>& newTracks);         //called every time when user-specified parameter changes (the kernel width)
-
-	//Compute shaders to accelerate edge bundling 
-	ComputeShader voxelCountShader;
-	ComputeShader denseEstimationShaderX;
-	ComputeShader denseEstimationShaderY;
-	ComputeShader denseEstimationShaderZ;
-	ComputeShader advectionShader;
-	ComputeShader smoothShader;
-	ComputeShader relaxShader;
-	ComputeShader updateDirectionShader;
-	ComputeShader updateNormalShader;
-	ComputeShader forceConsecutiveShader;
 
 	//GPU passes for edge bundling
 	void voxelCountPass();
@@ -149,12 +153,23 @@ private:
 	bool enableSlicling=false;
 	glm::vec3 slicingPos;
 	glm::vec3 slicingDir;
-	ComputeShader slicingShader;
 
 	//PBR materials
 	float roughness=0.2f;
 	float metallic=0.8f;
 
+	// Compute shaders
+	std::shared_ptr<ComputeShader> voxelCountShader;
+	std::shared_ptr<ComputeShader> denseEstimationShaderX;
+	std::shared_ptr<ComputeShader> denseEstimationShaderY;
+	std::shared_ptr<ComputeShader> denseEstimationShaderZ;
+	std::shared_ptr<ComputeShader> advectionShader;
+	std::shared_ptr<ComputeShader> smoothShader;
+	std::shared_ptr<ComputeShader> relaxShader;
+	std::shared_ptr<ComputeShader> updateDirectionShader;
+	std::shared_ptr<ComputeShader> updateNormalShader;
+	std::shared_ptr<ComputeShader> forceConsecutiveShader;
+	std::shared_ptr<ComputeShader> slicingShader;
 
 	////TEST
 	//// CUDA related
