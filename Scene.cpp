@@ -12,6 +12,15 @@ void Scene::addInstance(std::string filePath) {
 	instances.push_back(Instance(filePath, radius, nTris));
 }
 
+void Scene::removeInstance(int insId) {
+	if(insId < instances.size())
+	  instances.erase(instances.begin());
+	if (instances.size() > 0)
+		activatedInstance = 0;
+	else
+		activatedInstance = -1;
+}
+
 void Scene::setActivatedInstance(int id) {
 	activatedInstance = id;
 	instances.at(id).initSSBOBinding();

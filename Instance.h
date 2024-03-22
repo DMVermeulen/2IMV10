@@ -18,11 +18,11 @@ public:
 	std::vector<uint32_t>& getIndices();
 	void setVisible(bool visible);
 	void drawLineMode(float lineWidth);
-	void recreateMeshNewRadius(float radius, int nTris);
-	void recreateMeshNewNTris(float radius, int nTris);
-	void edgeBundling(float p, float radius, int nTris);
+	//void recreateMeshNewRadius(float radius, int nTris);
+	//void recreateMeshNewNTris(float radius, int nTris);
+	//void edgeBundling(float p, float radius, int nTris);
 	void edgeBundlingGPU(float p, float radius, int nTris);
-	void edgeBundlingCUDA(float p, float radius, int nTris);
+	//void edgeBundlingCUDA(float p, float radius, int nTris);
 	void initSSBOBinding();
 	int getNVoxelsX();
 	int getNVoxelsY();
@@ -69,8 +69,8 @@ private:
 	void updateTubes(std::vector<glm::vec3>& currentTracks);
 	void initLineNormals();
 	void initLineDirections();
-	void updateTriangles(float radius, int nTris);
-	void updateVertexIndiceBuffer();
+	//void updateTriangles(float radius, int nTris);
+	//void updateVertexIndiceBuffer();
 	std::vector<glm::vec3> readTCK(const std::string& filename);
 	void initVertexBufferLineMode();
 
@@ -93,9 +93,11 @@ private:
 	std::vector<uint32_t> voxelCount;
 	void spaceVoxelization();  //called only once when the instance is initialized
 	void resampling();
-	std::vector<float> computeDensity(float p);    //called every time when user-specified parameter changes (the kernel width)
-	std::vector<glm::vec3> advection(std::vector<float>& denseMap,float p);   //called every time when user-specified parameter changes (the kernel width)
-	std::vector<glm::vec3> smoothing(std::vector<glm::vec3>& newTracks);         //called every time when user-specified parameter changes (the kernel width)
+
+	// CPU-based edge bundling
+	//std::vector<float> computeDensity(float p);    //called every time when user-specified parameter changes (the kernel width)
+	//std::vector<glm::vec3> advection(std::vector<float>& denseMap,float p);   //called every time when user-specified parameter changes (the kernel width)
+	//std::vector<glm::vec3> smoothing(std::vector<glm::vec3>& newTracks);         //called every time when user-specified parameter changes (the kernel width)
 
 	//Compute shaders to accelerate edge bundling 
 	ComputeShader voxelCountShader;

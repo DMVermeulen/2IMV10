@@ -30,6 +30,7 @@ void Application::initScene() {
 	scene.addInstance("models\\whole_brain.tck"); 
 	scene.addInstance("models\\AF_left.tck");
 	scene.setActivatedInstance(0);
+	scene.removeInstance(0);
 
 	//test
 	//scene.updateInstanceEnableSlicing();
