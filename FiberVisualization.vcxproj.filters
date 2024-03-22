@@ -116,6 +116,9 @@
     <ClInclude Include="helper_math.h">
       <Filter>头文件\cudaMath</Filter>
     </ClInclude>
+    <ClInclude Include="imfilebrowser.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="edgeBundlingKernels.cu">

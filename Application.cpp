@@ -99,6 +99,9 @@ void Application::initWindow() {
 	ImGui_ImplGlfw_InstallEmscriptenCanvasResizeCallback("#canvas");
 #endif
 	ImGui_ImplOpenGL3_Init(glsl_version);
+
+	fileDialog.SetTitle("title");
+	fileDialog.SetTypeFilters({ ".tck" });
 }
 
 void Application::initRenderer() {
@@ -141,7 +144,7 @@ void Application::mainLoop() {
 		glViewport(0, 0, display_w, display_h);
 		glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
 		glClear(GL_COLOR_BUFFER_BIT);
-		if(!suspendRender)
+		if(!suspendRender && !scene.isEmpty())
 		  renderFrame();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -170,6 +173,7 @@ void Application::renderUI() {
 		static int colorMode = 0;
 		static int lightingMode = 0;
 		glm::vec3 colorMapConstant=glm::vec3(0,0,1);
+		static std::vector<std::string> items = { "instance 0 ", "instance 1" };
 
 		//ImGui::Begin("Settings");                          // Create a window called "Hello, world!" and append into it.
 
@@ -199,25 +203,51 @@ void Application::renderUI() {
 		ImGui::Begin("Settings");
 		if (ImGui::CollapsingHeader("Models"))
 		{
-			if (ImGui::SliderFloat("Color flattening", &colorInterval, 0.0f, 1.0f)) {
-				renderer.setColorFlattening(colorInterval / 2);
+			static int currentItemInstance = 0;
+			// Add new instance
+			if (ImGui::Button("Add..."))
+					fileDialog.Open();
+			fileDialog.Display();
+			if (fileDialog.HasSelected())
+			{
+				std::string fileName= fileDialog.GetSelected().string();
+				std::size_t pos = fileName.find_last_of('\\'); // Find the last '\' character
+				std::string instanceName;
+				if (pos != std::string::npos) 
+				   instanceName = fileName.substr(pos + 1);
+				items.push_back(instanceName);
+				scene.addInstance(fileName);
+				scene.setActivatedInstance(int(items.size()) - 1);
+				currentItemInstance = int(items.size()) - 1;
+				fileDialog.ClearSelected();
 			}
+
+			// Remove instance
+			if (ImGui::Button("Remove")) {
+				scene.removeInstance(currentItemInstance);
+				items.erase(items.begin() + currentItemInstance);
+				if (items.size() > 0)
+					currentItemInstance = 0;
+				else
+					currentItemInstance = -1;
+			}
+			
 			//Select an instance to visualize
-			static const char* items[] = { "instance 0 ", "instance 1" };
-			static int currentItem = 0;
-			if (ImGui::BeginCombo("##combo", items[currentItem])) {
-				for (int i = 0; i < IM_ARRAYSIZE(items); i++) {
-					bool isSelected = (currentItem == i);
-					if (ImGui::Selectable(items[i], isSelected)) {
-						currentItem = i;
-						scene.setActivatedInstance(i);
-						//getInstanceSettings();
-						renderer.updateShadingPassInstanceInfo();
+			if (items.size() > 0) {
+				if (ImGui::BeginCombo("##instances", items[currentItemInstance].c_str())) {
+					for (int i = 0; i < items.size(); i++) {
+						bool isSelected = (currentItemInstance == i);
+						if (ImGui::Selectable(items[i].c_str(), isSelected)) {
+							currentItemInstance = i;
+							scene.setActivatedInstance(i);
+							//getInstanceSettings();
+							renderer.updateShadingPassInstanceInfo();
+						}
+						if (isSelected)
+							ImGui::SetItemDefaultFocus();
 					}
-					if (isSelected)
-						ImGui::SetItemDefaultFocus();
+					ImGui::EndCombo();
 				}
-				ImGui::EndCombo();
 			}
 		}
 
@@ -257,33 +287,33 @@ void Application::renderUI() {
 			}
 		}
 
-		if (ImGui::CollapsingHeader("Materials"))
-		{
-			if (ImGui::SliderFloat("roughness", &roughness, 0.0f, 1.0f)) {
-				scene.setInstanceMaterial(roughness, metallic);
-			}
-			if (ImGui::SliderFloat("metallic", &metallic, 0.0f, 1.0f)) {
-				scene.setInstanceMaterial(roughness, metallic);
-			}
-		}
+		//if (ImGui::CollapsingHeader("Materials"))
+		//{
+		//	if (ImGui::SliderFloat("roughness", &roughness, 0.0f, 1.0f)) {
+		//		scene.setInstanceMaterial(roughness, metallic);
+		//	}
+		//	if (ImGui::SliderFloat("metallic", &metallic, 0.0f, 1.0f)) {
+		//		scene.setInstanceMaterial(roughness, metallic);
+		//	}
+		//}
 
 		if (ImGui::CollapsingHeader("Colormap"))
 		{
 			static const char* colorModes[] = { "direction ", "normal","constant" };
-			static int currentItem = 0;
-			if (ImGui::BeginCombo("##combo", colorModes[currentItem])) {
+			static int currentItemColorMap = 0;
+			if (ImGui::BeginCombo("##colorMapping", colorModes[currentItemColorMap])) {
 				for (int i = 0; i < IM_ARRAYSIZE(colorModes); i++) {
-					bool isSelected = (currentItem == i);
+					bool isSelected = (currentItemColorMap == i);
 					if (ImGui::Selectable(colorModes[i], isSelected)) {
-						currentItem = i;
+						currentItemColorMap = i;
 						renderer.setColorMode(i);
 					}
-					//if (isSelected && i != 2) // Exclude the color mapping board option from this condition
-					//	ImGui::SetItemDefaultFocus();
+					if (isSelected && i != 2) 
+						ImGui::SetItemDefaultFocus();
 				}
 				ImGui::EndCombo();
 			}
-			if (2==currentItem) {
+			if (2== currentItemColorMap) {
 				if (ImGui::ColorPicker3("Color", (float*)&colorMapConstant, ImGuiColorEditFlags_NoInputs)) {
 					renderer.setColorConstant(colorMapConstant);
 				}
@@ -293,18 +323,20 @@ void Application::renderUI() {
 		if (ImGui::CollapsingHeader("lighting mode"))
 		{
 			static const char* lightingModes[] = { "normal", "PBR" };
-			static int currentItem = 0;
-			if (ImGui::BeginCombo("##combo", lightingModes[currentItem])) {
+			static int currentItemLightingMode = 0;
+			if (ImGui::BeginCombo("##lightingMode", lightingModes[currentItemLightingMode])) {
 				for (int i = 0; i < IM_ARRAYSIZE(lightingModes); i++) {
-					bool isSelected = (currentItem == i);
+					bool isSelected = (currentItemLightingMode == i);
 					if (ImGui::Selectable(lightingModes[i], isSelected)) {
-						currentItem = i;
+						currentItemLightingMode = i;
 						renderer.setLightingMode(i);
 					}
+					if (isSelected && i != 1)
+						ImGui::SetItemDefaultFocus();
 				}
 				ImGui::EndCombo();
 			}
-			if (1 == currentItem) {
+			if (1 == currentItemLightingMode) {
 				if (ImGui::SliderFloat("roughness", &roughness, 0.0f, 1.0f)) {
 					scene.setInstanceMaterial(roughness, metallic);
 				}

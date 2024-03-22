@@ -99,6 +99,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>D:\DevTools\libraries for Vulkan\GLFW\glfw-3.3.8.bin.WIN64\include;D:\DevTools\libraries for Vulkan\GLAD\include;D:\DevTools\libraries for Vulkan\GLM\glm-0.9.9.8;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -118,6 +119,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>D:\DevTools\libraries for Vulkan\GLFW\glfw-3.3.8.bin.WIN64\include;D:\DevTools\libraries for Vulkan\GLAD\include;D:\DevTools\libraries for Vulkan\GLM\glm-0.9.9.8;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -139,6 +141,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>D:\DevTools\libraries for Vulkan\GLFW\glfw-3.3.8.bin.WIN64\include;D:\DevTools\libraries for Vulkan\GLAD\include;D:\DevTools\libraries for Vulkan\GLM\glm-0.9.9.8;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -162,6 +165,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>D:\DevTools\libraries for Vulkan\GLFW\glfw-3.3.8.bin.WIN64\include;D:\DevTools\libraries for Vulkan\GLAD\include;D:\DevTools\libraries for Vulkan\GLM\glm-0.9.9.8;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -199,6 +203,7 @@
     <ClInclude Include="ComputeShader.h" />
     <ClInclude Include="Enums.h" />
     <ClInclude Include="helper_math.h" />
+    <ClInclude Include="imfilebrowser.h" />
     <ClInclude Include="Instance.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Scene.h" />

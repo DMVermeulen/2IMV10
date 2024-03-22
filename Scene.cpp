@@ -62,7 +62,8 @@ std::vector<uint32_t>& Scene::getInstanceIndicies(int insId) {
 }
 
 void Scene::drawActivatedInstanceLineMode(float lineWidth) {
-	instances.at(activatedInstance).drawLineMode(lineWidth);
+	if(instances.size()>0)
+		instances.at(activatedInstance).drawLineMode(lineWidth);
 }
 
 void Scene::drawAllInstancesLineMode(float lineWidth) {
@@ -99,7 +100,8 @@ void Scene::edgeBundling(float p, float radius, int nTris) {
 	//	//instance.edgeBundling(p,radius,nTris);
 	//	instance.edgeBundlingGPU(p, radius, nTris);
 	//}
-	instances.at(activatedInstance).edgeBundlingGPU(p, radius, nTris);
+	if (instances.size() > 0)
+		instances.at(activatedInstance).edgeBundlingGPU(p, radius, nTris);
 	//instances.at(activatedInstance).testSmoothing();
 	//instances.at(activatedInstance).edgeBundlingCUDA(p, radius, nTris);
 }
@@ -137,18 +139,26 @@ GLuint Scene::getInstanceVoxelCount() {
 }
 
 void Scene::slicing(glm::vec3 pos, glm::vec3 dir) {
-	instances.at(activatedInstance).slicing(pos, dir);
+	if (instances.size() > 0)
+		instances.at(activatedInstance).slicing(pos, dir);
 }
 
 void Scene::updateInstanceEnableSlicing(glm::vec3 pos, glm::vec3 dir) {
-	instances.at(activatedInstance).updateEnableSlicing(pos, dir);
+	if (instances.size() > 0)
+		instances.at(activatedInstance).updateEnableSlicing(pos, dir);
 }
 
 void Scene::setInstanceMaterial(float roughness, float metallic) {
-	instances.at(activatedInstance).setMaterial(roughness, metallic);
+	if (instances.size() > 0)
+		instances.at(activatedInstance).setMaterial(roughness, metallic);
 }
 
 void Scene::getInstanceMaterial(float* roughness, float* metallic) {
-	instances.at(activatedInstance).getMaterial(roughness, metallic);
+	if (instances.size() > 0)
+		instances.at(activatedInstance).getMaterial(roughness, metallic);
+}
+
+bool Scene::isEmpty() {
+	return instances.size() == 0;
 }
 

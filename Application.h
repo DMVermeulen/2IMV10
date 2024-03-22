@@ -12,7 +12,7 @@
 #include"Scene.h"
 #include"Camera.h"
 #include <GLFW/glfw3.h> // Will drag system OpenGL headers
-
+#include"imfilebrowser.h"
 
 class Application {
 public:
@@ -26,6 +26,7 @@ private:
 	//self pointer (used by static method)
 	//UI related
 	ImGuiIO io;
+	ImGui::FileBrowser fileDialog;
 	bool show_demo_window = true;
 	bool show_another_window = false;
 	bool ImGuiIOWantCaptureMouse = false;
