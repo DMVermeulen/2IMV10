@@ -49,11 +49,14 @@ public:
 	void slicing(glm::vec3 pos, glm::vec3 dir);
 	void setMaterial(float roughness, float metallic);
 	void getMaterial(float* roughness, float* metallic);
+	void activate();
+	void deactivate();
 
 	//DEBUG
 	void testSmoothing();
 
 private:
+	bool isActivated = false;
 	//std::vector<std::vector<glm::vec3>> tracks;
 	std::vector<glm::vec3> tracks;     //stores the original tracks without bundling
 	std::vector<uint32_t> trackOffset;
@@ -148,6 +151,8 @@ private:
 	GLuint texTempDirections;
 	GLuint texUpdatedDirections;
 	void initTextures();
+	void destroyTextures();
+	void recreateTextures();
 
 	//Slicing related
 	bool enableSlicling=false;

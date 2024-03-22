@@ -49,8 +49,14 @@ void Scene::removeInstance(int insId) {
 }
 
 void Scene::setActivatedInstance(int id) {
+	int preId = activatedInstance;
+	if(preId >=0 && preId <instances.size())
+	 instances.at(preId).deactivate();
+		
 	activatedInstance = id;
-	instances.at(id).initSSBOBinding();
+	if (id >= 0 && id < instances.size()) {
+		instances.at(id).activate();
+	}
 }
 
 std::vector<Vertex>& Scene::getInstanceVertices(int insId) {

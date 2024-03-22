@@ -81,12 +81,13 @@ Instance::Instance(
 	//updateTriangles(radius, nTris);
 	//updateVertexIndiceBuffer();
 	
-	//Line mode
-	initVertexBufferLineMode();
+	////Line mode
+	//initVertexBufferLineMode();
 
-	initTextures();
-	//initSSBOBinding();
-	//initCudaMemory();
+	//initTextures();
+	////initSSBOBinding();
+	////initCudaMemory();
+	//isActivated = true;
 }
 
 Instance::~Instance() {
@@ -1253,4 +1254,143 @@ void Instance::setMaterial(float _roughness, float _metallic) {
 void Instance::getMaterial(float* _roughness, float* _metallic) {
 	*_roughness = roughness;
 	*_metallic = metallic;
+}
+
+void Instance::activate() {
+	recreateTextures();
+	initSSBOBinding();
+	isActivated = true;
+}
+
+void Instance::deactivate() {
+	destroyTextures();
+	isActivated = false;
+}
+
+void Instance::destroyTextures() {
+	GLuint buffersToDelete[] = {
+	VBOLines,
+	NBOLines,
+	DBOLines,
+	texTempTubes,
+	texUpdatedTubes,
+	texSmoothedTubes,
+	texRelaxedTubes,
+	texTempNormals,
+	texUpdatedNormals,
+	texTempDirections,
+	texUpdatedDirections,
+	texVoxelCount,
+	texIsFiberEndpoint
+	};
+	glDeleteBuffers(13, buffersToDelete);
+
+	glDeleteVertexArrays(1,&VAOLines);
+
+	GLuint texturesToDelete[] = { 
+		texDenseX,
+		texDenseY,
+		texDenseMap,
+		
+	};
+	glDeleteTextures(3, texturesToDelete);
+}
+
+void Instance::recreateTextures() {
+	glGenVertexArrays(1, &VAOLines);
+	glGenBuffers(1, &VBOLines);
+	glGenBuffers(1, &NBOLines);
+	glGenBuffers(1, &DBOLines);
+
+	glBindVertexArray(VAOLines);
+	glBindBuffer(GL_ARRAY_BUFFER, VBOLines);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * tubes.size(), tubes.data(), GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, NBOLines);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * normals.size(), normals.data(), GL_STATIC_DRAW);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(1);
+
+	glBindBuffer(GL_ARRAY_BUFFER, DBOLines);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * directions.size(), directions.data(), GL_STATIC_DRAW);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(2);
+
+	glBindVertexArray(0);
+
+	//temp tracks
+	glGenBuffers(1, &texTempTubes);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texTempTubes);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
+
+	//updated tracks
+	glGenBuffers(1, &texUpdatedTubes);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texUpdatedTubes);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
+
+	//smoothed tracks
+	glGenBuffers(1, &texSmoothedTubes);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texSmoothedTubes);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
+
+	//relaxed tracks
+	glGenBuffers(1, &texRelaxedTubes);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texRelaxedTubes);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
+
+	transferDataGPU(VBOLines, texRelaxedTubes, tubes.size() * 6 * sizeof(float));
+
+	//temp normals
+	glGenBuffers(1, &texTempNormals);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texTempNormals);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
+
+	//updated normals
+	glGenBuffers(1, &texUpdatedNormals);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texUpdatedNormals);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
+
+	//temp directions
+	glGenBuffers(1, &texTempDirections);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texTempDirections);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
+
+	//updated directions
+	glGenBuffers(1, &texUpdatedDirections);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texUpdatedDirections);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
+
+	//voxelCount (1-D buffer)
+	glGenBuffers(1, &texVoxelCount);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texVoxelCount);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, totalVoxels * sizeof(uint32_t), NULL, GL_STATIC_DRAW);
+
+	//denseX (3D texture)
+	glGenTextures(1, &texDenseX);
+	glBindTexture(GL_TEXTURE_3D, texDenseX);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, nVoxels_X, nVoxels_Y, nVoxels_Z, 0, GL_RED, GL_FLOAT, NULL);
+
+	//denseY (3D texture)
+	glGenTextures(1, &texDenseY);
+	glBindTexture(GL_TEXTURE_3D, texDenseY);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, nVoxels_X, nVoxels_Y, nVoxels_Z, 0, GL_RED, GL_FLOAT, NULL);
+
+	//denseMap (3D texture)
+	glGenTextures(1, &texDenseMap);
+	glBindTexture(GL_TEXTURE_3D, texDenseMap);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, nVoxels_X, nVoxels_Y, nVoxels_Z, 0, GL_RED, GL_FLOAT, NULL);
+
+	//isFiberEndpoint
+	glGenBuffers(1, &texIsFiberEndpoint);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texIsFiberEndpoint);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, isFiberEndpoint.size() * sizeof(int), isFiberEndpoint.data(), GL_STATIC_DRAW);
+
 }
