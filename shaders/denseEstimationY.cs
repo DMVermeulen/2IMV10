@@ -10,9 +10,9 @@ layout(binding = 11) buffer denseMap {
     float denseMapData[];
 }; */
 
-layout(r32f, binding = 1) uniform image3D denseMapX;
+layout(r32f, binding = 0) uniform image3D denseMapX;
 
-layout(r32f, binding = 2) uniform image3D denseMapY;
+layout(r32f, binding = 1) uniform image3D denseMapY;
 
 uniform int totalSize;
 uniform int nVoxels_X;

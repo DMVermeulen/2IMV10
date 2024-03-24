@@ -2,7 +2,7 @@
 
 layout (local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
 
-layout(binding = 0) buffer voxelCount {
+layout(binding = 1) buffer voxelCount {
     uint voxelCountData[];
 };
 
@@ -10,7 +10,7 @@ layout(binding = 0) buffer voxelCount {
     float denseMapData[];
 }; */
 
-layout(r32f, binding = 0) uniform image3D denseMapX;
+layout(r32f, binding = 1) uniform image3D denseMapX;
 
 
 uniform int totalSize;

@@ -19,6 +19,7 @@ public:
 	void setColorFlattening(float colorInterval);
 	void setContrast(float contrast);
 	void setBrightness(float brightness);
+	void setSaturation(float saturation);
 	void setSharpening(float sharpening);
 	void updateShadingPassInstanceInfo();
 	void setRenderMode(int renderMode);
@@ -96,6 +97,7 @@ private:
 	float colorInterval = 0;
 	float contrast = 1.0f;
 	float brightness = 0.0f;
+	float saturation = 1.0f;
 	float sharpening = 0.0f;
 	int renderMode = 0;
 	int lightingMode = 0;

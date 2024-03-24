@@ -4,44 +4,8 @@
 #include <glm/gtc/constants.hpp>
 #include<iostream>
 #include <algorithm>
-//#include<cuda_runtime.h>
-//#include<device_launch_parameters.h>
-
-//#ifdef __CUDACC__
-//#define KERNEL_ARGS2(grid, block) <<< grid, block >>>
-//#define KERNEL_ARGS3(grid, block, sh_mem) <<< grid, block, sh_mem >>>
-//#define KERNEL_ARGS4(grid, block, sh_mem, stream) <<< grid, block, sh_mem, stream >>>
-//#else
-//#define KERNEL_ARGS2(grid, block)
-//#define KERNEL_ARGS3(grid, block, sh_mem)
-//#define KERNEL_ARGS4(grid, block, sh_mem, stream)
-//#endif
 
 #define INFINITE 999999999
-
-//extern "C" void cuda_voxelCount(
-//	float* oriTubesData,     
-//	int* voxelCountData,    
-//	int totalSize, int nVoxels_X, int nVoxels_Y, int nVoxels_Z, float3 aabbMin, float voxelUnitSize  //other parameters
-//);
-//
-//extern "C" void cuda_densityEstimation(
-//	int* voxelCountData,
-//	float* denseMapData,
-//	int totalSize, int nVoxels_X, int nVoxels_Y, int nVoxels_Z, int kernelR, float voxelUnitSize
-//);
-//
-//extern "C" void cuda_advection(
-//	float* oriTubesData, float* tempNormalsData, float* denseMapData,  //read from
-//	float* updatedTubesData,                       //write to
-//	int totalSize, int nVoxels_X, int nVoxels_Y, int nVoxels_Z, int kernelR, float voxelUnitSize, float3 aabbMin, int totalVoxels
-//);
-//
-//extern "C" void cuda_relaxation(
-//	float* tempTubesData, float* smoothedTubesData,
-//	float* relaxedTubesData,
-//	int totalSize, float relaxFactor
-//);
 
 Instance::Instance(
 	std::string path,
@@ -53,9 +17,8 @@ Instance::Instance(
 	std::shared_ptr<ComputeShader> _smoothShader,
 	std::shared_ptr<ComputeShader> _relaxShader,
 	std::shared_ptr<ComputeShader> _updateDirectionShader,
-	std::shared_ptr<ComputeShader> _updateNormalShader,
-	std::shared_ptr<ComputeShader> _forceConsecutiveShader,
-	std::shared_ptr<ComputeShader> _slicingShader
+	std::shared_ptr<ComputeShader> _slicingShader,
+	std::shared_ptr<ComputeShader> _trackToLinesShader
 )
 	//:denseEstimationShader1D("shaders/denseEstimation.cs")
 	:voxelCountShader(_voxelCountShader),
@@ -66,16 +29,16 @@ Instance::Instance(
 	smoothShader(_smoothShader),
 	relaxShader(_relaxShader),
 	updateDirectionShader(_updateDirectionShader),
-	updateNormalShader(_updateNormalShader),
-	forceConsecutiveShader(_forceConsecutiveShader),
-	slicingShader(_slicingShader)
+	slicingShader(_slicingShader),
+	trackToLinesShader(_trackToLinesShader)
 {
 	loadTracksFromTCK(path);
 	spaceVoxelization();
 	trackResampling();
+	initAddition();
 	updateTubes(tracks);
-	initLineDirections();
-	initLineNormals();
+	//initLineDirections();
+	//initLineNormals();
 
 	//Triangle mode
 	//updateTriangles(radius, nTris);
@@ -91,140 +54,6 @@ Instance::Instance(
 }
 
 Instance::~Instance() {
-
-}
-
-void Instance::initTextures() {
-	////original tracks
-	//glGenBuffers(1, &texOriTracks);
-	//glBindBuffer(GL_TEXTURE_BUFFER, texOriTracks);
-	//glBufferData(GL_TEXTURE_BUFFER, tracks.size() * 3 * sizeof(float), tracks.data(), GL_STATIC_DRAW);
-
-	////temp tracks
-	//glGenBuffers(1, &texTempTracks);
-	//glBindBuffer(GL_TEXTURE_BUFFER, texTempTracks);
-	//glBufferData(GL_TEXTURE_BUFFER, tracks.size() * 3 * sizeof(float), NULL, GL_STATIC_DRAW);
-
-	////updated tracks
-	//glGenBuffers(1, &texUpdatedTracks);
-	//glBindBuffer(GL_TEXTURE_BUFFER, texUpdatedTracks);
-	//glBufferData(GL_TEXTURE_BUFFER, tracks.size() * 3 * sizeof(float), NULL, GL_STATIC_DRAW);
-
-	//temp tracks
-	glGenBuffers(1, &texTempTubes);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texTempTubes);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
-
-	//updated tracks
-	glGenBuffers(1, &texUpdatedTubes);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texUpdatedTubes);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
-
-	//smoothed tracks
-	glGenBuffers(1, &texSmoothedTubes);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texSmoothedTubes);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
-
-	//relaxed tracks
-	glGenBuffers(1, &texRelaxedTubes);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texRelaxedTubes);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
-
-	transferDataGPU(VBOLines, texRelaxedTubes, tubes.size() * 6 * sizeof(float));
-
-	//temp normals
-	glGenBuffers(1, &texTempNormals);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texTempNormals);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
-
-	//updated normals
-	glGenBuffers(1, &texUpdatedNormals);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texUpdatedNormals);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
-
-	//temp directions
-	glGenBuffers(1, &texTempDirections);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texTempDirections);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
-
-	//updated directions
-	glGenBuffers(1, &texUpdatedDirections);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texUpdatedDirections);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
-
-	//voxelCount (1-D buffer)
-	glGenBuffers(1, &texVoxelCount);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texVoxelCount);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, totalVoxels * sizeof(uint32_t), NULL, GL_STATIC_DRAW);
-
-	////denseX (1-D buffer)
-	//glGenBuffers(1, &texDenseX);
-	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, texDenseX);
-	//glBufferData(GL_SHADER_STORAGE_BUFFER, totalVoxels * sizeof(float), NULL, GL_STATIC_READ | GL_STATIC_DRAW);
-
-	////denseY (1-D buffer)
-	//glGenBuffers(1, &texDenseY);
-	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, texDenseY);
-	//glBufferData(GL_SHADER_STORAGE_BUFFER, totalVoxels * sizeof(float), NULL, GL_STATIC_READ | GL_STATIC_DRAW);
-
-	////denseMap (1-D buffer)
-	//glGenBuffers(1, &texDenseMap);
-	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, texDenseMap);
-	//glBufferData(GL_SHADER_STORAGE_BUFFER, totalVoxels * sizeof(float), NULL, GL_STATIC_READ| GL_STATIC_DRAW);
-
-	//denseX (3D texture)
-	glGenTextures(1, &texDenseX);
-	glBindTexture(GL_TEXTURE_3D, texDenseX);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, nVoxels_X, nVoxels_Y, nVoxels_Z, 0, GL_RED, GL_FLOAT, NULL);
-
-	//denseY (3D texture)
-	glGenTextures(1, &texDenseY);
-	glBindTexture(GL_TEXTURE_3D, texDenseY);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, nVoxels_X, nVoxels_Y, nVoxels_Z, 0, GL_RED, GL_FLOAT, NULL);
-
-	//denseMap (3D texture)
-	glGenTextures(1, &texDenseMap);
-	glBindTexture(GL_TEXTURE_3D, texDenseMap);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, nVoxels_X, nVoxels_Y, nVoxels_Z, 0, GL_RED, GL_FLOAT, NULL);
-
-	//isFiberEndpoint
-	glGenBuffers(1, &texIsFiberEndpoint);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texIsFiberEndpoint);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, isFiberEndpoint.size() * sizeof(int), isFiberEndpoint.data(), GL_STATIC_DRAW);
-
-	//debug
-	glGenBuffers(1, &debugUINT);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, debugUINT);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, totalVoxels * sizeof(uint32_t), NULL, GL_STATIC_DRAW);
-
-	glGenBuffers(1, &debugFLOAT);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, debugFLOAT);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, 6* tubes.size() * sizeof(float), NULL, GL_STATIC_DRAW);
-
-}
-
-void Instance::initSSBOBinding() {
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texTempTubes);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, texVoxelCount);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, texIsFiberEndpoint);
-	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, texDenseMap);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, texUpdatedTubes);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 9, texTempNormals);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, texSmoothedTubes);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, texRelaxedTubes);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 10, VBOLines);
-	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 10, texDenseX);
-	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 11, texDenseY);
-
-	glBindImageTexture(0, texDenseMap, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
-	glBindImageTexture(1, texDenseX, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
-	glBindImageTexture(2, texDenseY, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
 
 }
 
@@ -375,28 +204,45 @@ void Instance::trackResampling() {
 	trackSize = tempTrackSize;
 }
 
-//Recreate tubes from new tracks
-//Input: current tracks
-//Output: updated tubes
-void Instance::updateTubes(std::vector<glm::vec3>& currentTracks) {
-	tubes.clear();
-	int offset = 0;
+//initialize additional information: isFiberBegin, isFiberEnd, trackId
+void Instance::initAddition() {
+	isFiberBegin.resize(tracks.size());
+	isFiberEnd.resize(tracks.size());
+	trackId.resize(tracks.size());
 	for (int i = 0; i < trackOffset.size(); i++) {
-		for (int j = trackOffset[i]; j < trackOffset[i]+trackSize[i]-1; j++) {
-			/*tubes.push_back(Tube{ currentTracks[j] ,currentTracks[j + 1]});*/
-			tubes.push_back(Tube{ currentTracks.at(j) ,currentTracks.at(j+1) });
-			float leng = glm::dot(currentTracks[j] - currentTracks[j + 1], currentTracks[j] - currentTracks[j + 1]);
-			if (j == trackOffset[i]) {
-				isFiberEndpoint.push_back(1);
-			}
-			else {
-				isFiberEndpoint.push_back(0);
-				isFiberEndpoint.push_back(0);
-			}
-		}
-		isFiberEndpoint.push_back(1);
+		isFiberBegin[trackOffset[i]] = 1;
+		isFiberEnd[trackOffset[i]+trackSize[i]-1] = 1;
 	}
+	for (int i = 0; i < trackOffset.size(); i++) {
+		for (int k = 0; k < trackSize[i]; k++) {
+			trackId[trackOffset[i] + k] = i;
+		}
+	}
+	lineBufferSize = 2 * tracks.size() - 2 * trackOffset.size();
 }
+
+////Recreate tubes from new tracks
+////Input: current tracks
+////Output: updated tubes
+//void Instance::updateTubes(std::vector<glm::vec3>& currentTracks) {
+//	tubes.clear();
+//	int offset = 0;
+//	for (int i = 0; i < trackOffset.size(); i++) {
+//		for (int j = trackOffset[i]; j < trackOffset[i]+trackSize[i]-1; j++) {
+//			/*tubes.push_back(Tube{ currentTracks[j] ,currentTracks[j + 1]});*/
+//			tubes.push_back(Tube{ currentTracks.at(j) ,currentTracks.at(j+1) });
+//			float leng = glm::dot(currentTracks[j] - currentTracks[j + 1], currentTracks[j] - currentTracks[j + 1]);
+//			if (j == trackOffset[i]) {
+//				isFiberEndpoint.push_back(1);
+//			}
+//			else {
+//				isFiberEndpoint.push_back(0);
+//				isFiberEndpoint.push_back(0);
+//			}
+//		}
+//		isFiberEndpoint.push_back(1);
+//	}
+//}
 
 //
 ////Output: updated vertices and indices
@@ -472,7 +318,7 @@ void Instance::setVisible(bool _visible) {
 void Instance::drawLineMode(float lineWidth) {
 	glBindVertexArray(VAOLines);
 	glLineWidth(lineWidth);
-	glDrawArrays(GL_LINES, 0, 2*tubes.size());
+	glDrawArrays(GL_LINES, 0, lineBufferSize);
 
 	glBindVertexArray(0);
 }
@@ -700,15 +546,10 @@ void Instance::resampling() {
 void Instance::edgeBundlingGPU(float _p, float radius, int nTris) {
 	//repeat bundling for several iterations
 
-    //init texTempTubes with originaltubes
-	glBindBuffer(GL_TEXTURE_BUFFER, texTempTubes);
-	glBufferData(GL_TEXTURE_BUFFER, tubes.size() * 6 * sizeof(float), tubes.data(), GL_STATIC_DRAW);
-	//init texTempNormals with original normals
-	glBindBuffer(GL_TEXTURE_BUFFER, texTempNormals);
-	glBufferData(GL_TEXTURE_BUFFER, tubes.size() * 6 * sizeof(float), normals.data(), GL_STATIC_DRAW);
-	//init texTempNormals with original directions
-	glBindBuffer(GL_TEXTURE_BUFFER, texTempDirections);
-	glBufferData(GL_TEXTURE_BUFFER, tubes.size() * 6 * sizeof(float), directions.data(), GL_STATIC_DRAW);
+	//TESTING
+	//init texTempTracks with original tracks
+	glBindBuffer(GL_TEXTURE_BUFFER, texTempTracks);
+	glBufferData(GL_TEXTURE_BUFFER, tracks.size() * 3 * sizeof(float), tracks.data(), GL_STATIC_DRAW);
 
 	float p = _p;
 	for (int i = 0; i < nIters; i++) {
@@ -718,40 +559,22 @@ void Instance::edgeBundlingGPU(float _p, float radius, int nTris) {
 		glClearBufferData(GL_SHADER_STORAGE_BUFFER, GL_R32UI, GL_RED, GL_UNSIGNED_INT, &clearValue);
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-		float d = 1;
 		voxelCountPass();
-		float b = 1;
 		denseEstimationPass(p);
 		advectionPass(p);
-		float c = 1;
 		smoothPass(p);
-		float a = 1;
-		forceConsecutivePass();
 		//re-transfer original tracks to texTempTubes, for relaxation pass
-		glBindBuffer(GL_TEXTURE_BUFFER, texTempTubes);
-		glBufferData(GL_TEXTURE_BUFFER, tubes.size() * 6 * sizeof(float), tubes.data(), GL_STATIC_DRAW);
+		glBindBuffer(GL_TEXTURE_BUFFER, texTempTracks);
+		glBufferData(GL_TEXTURE_BUFFER, tracks.size() * 3 * sizeof(float), tracks.data(), GL_STATIC_DRAW);
 		relaxationPass();
-		
-		//updateDirectionPass();
-		//updateNormalPass();
 
-		transferDataGPU(texRelaxedTubes, texTempTubes, tubes.size() * 6 * sizeof(float));  //copy data from resulting updated to temp for next iteration
-		//transferDataGPU(texUpdatedDirections, texTempDirections, tubes.size() * 6 * sizeof(float));
-		//transferDataGPU(texUpdatedNormals, texTempNormals, tubes.size() * 6 * sizeof(float));
-
-		//DEBUG
-		//transferDataGPU(texSmoothedTubes, texTempTubes, tubes.size() * 6 * sizeof(float));
-		p *=0.95;
-		int r = p * nVoxels_Z;
-		r++;
+		transferDataGPU(texRelaxedTracks, texTempTracks, tracks.size() * 3 * sizeof(float));  //copy data from resulting updated to temp for next iteration
+		p *= 0.95;
 	}
-	//DEBUG
-	//transferDataGPU(texSmoothedTubes, VBOLines, tubes.size() * 6 * sizeof(float));
-
-	//line mode
-	transferDataGPU(texRelaxedTubes, VBOLines, tubes.size() * 6 * sizeof(float));  //copy data from relaxed to Vertex buffer
-	//transferDataGPU(texUpdatedDirections, DBOLines, tubes.size() * 6 * sizeof(float)); 
-	//transferDataGPU(texUpdatedNormals, NBOLines, tubes.size() * 6 * sizeof(float));  
+	trackToLinePass(texRelaxedTracks,texRelaxedLines);   //map from tracks to lines for rendering
+	transferDataGPU(texRelaxedLines, VBOLines, size_t(lineBufferSize) * 3 * sizeof(float));
+	//trackToLinePass(texRelaxedTracks, texRelaxedLines);
+	//trackToLinePass(texRelaxedTracks, VBOLines);  
 
 	//update slicing
 	if (enableSlicling) {
@@ -766,13 +589,11 @@ void Instance::edgeBundlingGPU(float _p, float radius, int nTris) {
 
 //tubes->voxelCount
 void Instance::voxelCountPass() {
-	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texTempTubes);
-	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, texVoxelCount);
-	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, debugFLOAT);
-	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, texIsFiberEndpoint);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texTempTracks);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, texVoxelCount);
 
 	voxelCountShader->use();
-	voxelCountShader->setInt("totalSize", 2 * tubes.size());
+	voxelCountShader->setInt("totalSize", tracks.size());
 	voxelCountShader->setInt("nVoxels_X", nVoxels_X);
 	voxelCountShader->setInt("nVoxels_Y", nVoxels_Y);
 	voxelCountShader->setInt("nVoxels_Z", nVoxels_Z);
@@ -780,31 +601,9 @@ void Instance::voxelCountPass() {
 	voxelCountShader->setFloat("voxelUnitSize", voxelUnitSize);
 	voxelCountShader->setInt("totalVoxels", totalVoxels);
 
-	glDispatchCompute(1 + (unsigned int)2*tubes.size() / 128, 1, 1);
+	glDispatchCompute(1 + (unsigned int)tracks.size() / 128, 1, 1);
 
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
-
-	//glBindBuffer(GL_ARRAY_BUFFER, texVoxelCount);
-	//uint32_t * debugData = (uint32_t*)glMapBuffer(GL_ARRAY_BUFFER, GL_READ_ONLY);
-	//int MAX = 0;
-	//for (int i = 0; i < totalVoxels; i++) {
-	//	MAX = std::max(MAX, int(debugData[i]));
-	//}
-	//MAX++;
-
-	////debug
-	//glBindBuffer(GL_TEXTURE_BUFFER, texVoxelCount);
-	//glBufferData(GL_TEXTURE_BUFFER, totalVoxels * sizeof(uint32_t), voxelCount.data(), GL_STATIC_DRAW);
-
-	//glBindBuffer(GL_ARRAY_BUFFER, texVoxelCount);
-	//uint32_t* debugData = (uint32_t*)glMapBuffer(GL_ARRAY_BUFFER, GL_READ_WRITE);
-	//int cnt = 0;
-	//for (int i = 0; i < totalVoxels; i++) {
-	//	cnt+= debugData[i];
-	//	//if(debugData[i]>0)
-	//	//std::cout << debugData[i];
-	//}
-	//glUnmapBuffer(GL_ARRAY_BUFFER);
 }
 
 
@@ -824,6 +623,9 @@ void Instance::denseEstimationPass(float p) {
 	//glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 	//Convolution on X
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texVoxelCount);
+	glBindImageTexture(0, texDenseX, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
+
 	denseEstimationShaderX->use();
 	denseEstimationShaderX->setInt("totalSize", totalVoxels);
 	denseEstimationShaderX->setInt("nVoxels_X", nVoxels_X);
@@ -835,6 +637,9 @@ void Instance::denseEstimationPass(float p) {
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 	//Convolution on Y
+	glBindImageTexture(0, texDenseX, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
+	glBindImageTexture(1, texDenseY, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
+
 	denseEstimationShaderY->use();
 	denseEstimationShaderY->setInt("totalSize", totalVoxels);
 	denseEstimationShaderY->setInt("nVoxels_X", nVoxels_X);
@@ -846,6 +651,9 @@ void Instance::denseEstimationPass(float p) {
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 	//Convolution on Z
+	glBindImageTexture(0, texDenseY, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
+	glBindImageTexture(1, texDenseMap, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
+
 	denseEstimationShaderZ->use();
 	denseEstimationShaderZ->setInt("totalSize", totalVoxels);
 	denseEstimationShaderZ->setInt("nVoxels_X", nVoxels_X);
@@ -859,16 +667,13 @@ void Instance::denseEstimationPass(float p) {
 
 //update tubes, stores to texUpdatedTubes
 void Instance::advectionPass(float p) {
-	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, texOriTracks);
-	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, texUpdatedTracks);
-
-	////set binding buffers for compute pass
-	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, texUpdatedTubes);
-	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, debugFLOAT);
-	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 9, texTempNormals);
+	glBindImageTexture(0, texDenseMap, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texTempTracks);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, texUpdatedTracks);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, texTempNormals);
 
 	advectionShader->use();
-	advectionShader->setInt("totalSize", 2*tubes.size());
+	advectionShader->setInt("totalSize", tracks.size());
 	advectionShader->setInt("nVoxels_X", nVoxels_X);
 	advectionShader->setInt("nVoxels_Y", nVoxels_Y);
 	advectionShader->setInt("nVoxels_Z", nVoxels_Z);
@@ -876,9 +681,8 @@ void Instance::advectionPass(float p) {
 	advectionShader->setFloat("voxelUnitSize", voxelUnitSize);
 	advectionShader->setVec3("aabbMin", aabb.minPos);
 	advectionShader->setInt("totalVoxels", totalVoxels);
-	glDispatchCompute(1 + (unsigned int)2*tubes.size() / 128, 1, 1);
+	glDispatchCompute(1 + (unsigned int)tracks.size() / 128, 1, 1);
 
-	// make sure writing to buffer has finished before read
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 	//glBindBuffer(GL_ARRAY_BUFFER, debugFLOAT);
@@ -890,76 +694,68 @@ void Instance::advectionPass(float p) {
 
 void Instance::smoothPass(float p) {
 	int smoothL = p * nVoxels_Z;
-	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, texSmoothedTubes);
+
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texUpdatedTracks);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, texSmoothedTracks);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, texIsFiberBegin);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, texIsFiberEnd);
 
 	smoothShader->use();
-	smoothShader->setInt("totalSize", 2 * tubes.size());
+	smoothShader->setInt("totalSize", tracks.size());
 	smoothShader->setFloat("smoothFactor",smoothFactor);
 	smoothShader->setInt("smoothL", smoothL);
 	smoothShader->setFloat("voxelUnitSize", voxelUnitSize);
 
-	glDispatchCompute(1 + (unsigned int)2 * tubes.size() / 128, 1, 1);
+	glDispatchCompute(1 + (unsigned int)tracks.size() / 128, 1, 1);
 
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
-
-	//glBindBuffer(GL_ARRAY_BUFFER, texSmoothedTubes); 
- //   float* bufferData = (float*)glMapBuffer(GL_ARRAY_BUFFER, GL_READ_ONLY);
-	//for (int i = 0;i<6 *tubes.size(); i++) {
-	//	std::cout << bufferData[i];
-	//}
 }
 
 void Instance::relaxationPass() {
-
-	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texTempTubes);
-	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, texRelaxedTubes);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texTempTracks);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, texSmoothedTracks);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, texRelaxedTracks);
 
 	relaxShader->use();
-	relaxShader->setInt("totalSize", 2 * tubes.size());
+	relaxShader->setInt("totalSize", tracks.size());
 	relaxShader->setFloat("relaxFactor", relaxFactor);
 
-	glDispatchCompute(1 + (unsigned int)2 * tubes.size() / 128, 1, 1);
+	glDispatchCompute(1 + (unsigned int)tracks.size() / 128, 1, 1);
 
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
-
-	glBindBuffer(GL_ARRAY_BUFFER, texRelaxedTubes);
-
-    //float * debugData = (float*)glMapBuffer(GL_ARRAY_BUFFER, GL_READ_ONLY);
-    //for (int i = 0;i<6 *tubes.size(); i++) {
-    // 	std::cout << debugData[i];
-    // }
 }
 
 void Instance::updateDirectionPass() {
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 10, texUpdatedDirections);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texRelaxedTracks);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, texUpdatedDirections);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, texIsFiberBegin);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, texIsFiberEnd);
 
 	updateDirectionShader->use();
-	updateDirectionShader->setInt("totalSize", 2 * tubes.size());
+	updateDirectionShader->setInt("totalSize", tracks.size());
 
-	glDispatchCompute(1 + (unsigned int)2 * tubes.size() / 128, 1, 1);
-
-	glMemoryBarrier(GL_ALL_BARRIER_BITS);
-}
-
-void Instance::updateNormalPass() {
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 11, texUpdatedNormals);
-
-	updateNormalShader->use();
-	updateNormalShader->setInt("totalSize", 2 * tubes.size());
-
-	glDispatchCompute(1 + (unsigned int)2 * tubes.size() / 128, 1, 1);
+	glDispatchCompute(1 + (unsigned int)tracks.size() / 128, 1, 1);
 
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 }
 
-void Instance::forceConsecutivePass() {
-	forceConsecutiveShader->use();
-	forceConsecutiveShader->setInt("totalSize", 2 * tubes.size());
 
-	glDispatchCompute(1 + (unsigned int)2 * tubes.size() / 128, 1, 1);
+//map points in tracks to lines (double repeat the interior points in a track)
+void Instance::trackToLinePass(GLuint texTracks, GLuint texLines) {
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texTracks);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, texLines);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, texIsFiberBegin);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, texIsFiberEnd);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, texTrackId);
+
+	trackToLinesShader->use();
+	trackToLinesShader->setInt("totalSize", tracks.size());
+
+	glDispatchCompute(1 + (unsigned int)tracks.size() / 128, 1, 1);
 
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 }
+
 
 void Instance::transferDataGPU(GLuint srcBuffer, GLuint dstBuffer, size_t copySize) {
 	glBindBuffer(GL_ARRAY_BUFFER,srcBuffer);
@@ -968,223 +764,12 @@ void Instance::transferDataGPU(GLuint srcBuffer, GLuint dstBuffer, size_t copySi
 	// Transfer data from buffer 1 to buffer 2
 	glCopyBufferSubData(GL_ARRAY_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, copySize);
 
+	//For synchronization
+	glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
 	// Unbind buffers
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
-
-	//For synchronization
-	glMemoryBarrier(GL_ALL_BARRIER_BITS);
-}
-
-void Instance::initVertexBufferLineMode() {
-	if (-1 != VAOLines) {
-		//destroy old buffers 
-		glDeleteBuffers(1, &VBOLines);
-	}
-	glGenVertexArrays(1, &VAOLines);
-	glGenBuffers(1, &VBOLines);
-	glGenBuffers(1, &NBOLines);
-	glGenBuffers(1, &DBOLines);
-
-	glBindVertexArray(VAOLines);
-	glBindBuffer(GL_ARRAY_BUFFER, VBOLines);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * tubes.size(), tubes.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-	glEnableVertexAttribArray(0);
-
-	glBindBuffer(GL_ARRAY_BUFFER, NBOLines);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * normals.size(), normals.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-	glEnableVertexAttribArray(1);
-
-	glBindBuffer(GL_ARRAY_BUFFER, DBOLines);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * directions.size(), directions.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-	glEnableVertexAttribArray(2);
-
-	glBindVertexArray(0);
-}
-
-void Instance::initLineNormals() {
-	for (int i = 0; i < tubes.size(); i++) {
-		glm::vec3 vec;
-		if (1==isFiberEndpoint[2*i+1])
-			vec = glm::vec3(0, 0, 1);
-		else
-			vec = directions[2*(i + 1)];
-		glm::vec3 left = glm::cross(vec, directions[2*i]);
-		//glm::vec3 normal = glm::normalize(glm::cross(directions[i], left));
-		glm::vec3 normal = glm::normalize(glm::cross(directions[2*i], left));
-		normals.push_back(normal);
-		normals.push_back(normal);
-	}
-}
-
-void Instance::initLineDirections() {
-	for (int i = 0; i < tubes.size(); i++) {
-		glm::vec3 dir = glm::normalize(tubes[i].p1 - tubes[i].p2);
-		directions.push_back(dir);
-		directions.push_back(dir);
-	}
-}
-
-//void Instance::initCudaMemory() {
-//	//temp tracks
-//	cudaMalloc((void**)&d_tempTubes, tubes.size() * 6 * sizeof(float));
-//
-//	//updated tracks
-//	cudaMalloc((void**)&d_updatedTubes, tubes.size() * 6 * sizeof(float));
-//
-//	//smoothed tracks
-//	cudaMalloc((void**)&d_smoothedTubes, tubes.size() * 6 * sizeof(float));
-//
-//	//relaxed tracks
-//	cudaMalloc((void**)&d_relaxedTubes, tubes.size() * 6 * sizeof(float));
-//
-//	//temp normals
-//	cudaMalloc((void**)&d_tempNormals, tubes.size() * 6 * sizeof(float));
-//
-//	//updated normals
-//	cudaMalloc((void**)&d_updatedNormals, tubes.size() * 6 * sizeof(float));
-//
-//	//temp directions
-//	cudaMalloc((void**)&d_tempDirections, tubes.size() * 6 * sizeof(float));
-//
-//	//updated directions
-//	cudaMalloc((void**)&d_updatedDirections, tubes.size() * 6 * sizeof(float));
-//
-//	//voxelCount (1-D buffer)
-//	cudaMalloc((void**)&d_voxelCount, totalVoxels * sizeof(int));
-//
-//	//denseMap (1-D buffer)
-//	cudaMalloc((void**)&d_denseMap, totalVoxels * sizeof(float));
-//
-//	//isFiberEndpoint
-//	cudaMalloc((void**)&d_isFiberEndpoint, isFiberEndpoint.size() * sizeof(int));
-//
-//}
-//
-//void Instance::edgeBundlingCUDA(float p, float radius, int nTris) {
-//	int kernelR = p * nVoxels_Z;
-//	float3 aabbMin = make_float3(aabb.minPos.x, aabb.minPos.y, aabb.minPos.z);
-//
-//    //init texTempTubes with original tubes
-//	cudaMemcpy(d_tempTubes, tubes.data(), tubes.size() * 6 * sizeof(float), cudaMemcpyHostToDevice);
-//
-//	//init texTempNormals with original normals
-//	cudaMemcpy(d_tempNormals, normals.data(), tubes.size() * 6 * sizeof(float), cudaMemcpyHostToDevice);
-//
-//	//init texTempDirections with original directions
-//	cudaMemcpy(d_tempDirections, directions.data(), tubes.size() * 6 * sizeof(float), cudaMemcpyHostToDevice);
-//
-//	for (int i = 0; i < nIters; i++) {
-//		//clear voxelCount at the beginning of each iteration
-//		cudaMemset(d_voxelCount, 0, totalVoxels * sizeof(int));
-//		cudaDeviceSynchronize();
-//
-//		//voxelCount
-//		cuda_voxelCount(d_tempTubes, d_voxelCount, 2 * tubes.size(),nVoxels_X,nVoxels_Y,nVoxels_Z, aabbMin,voxelUnitSize);
-//		cudaDeviceSynchronize();
-//
-//		//densityEstimation
-//		cuda_densityEstimation(d_voxelCount, d_denseMap, totalVoxels, nVoxels_X, nVoxels_Y, nVoxels_Z, kernelR, voxelUnitSize);
-//		cudaDeviceSynchronize();
-//
-//		//advection
-//		cuda_advection(d_tempTubes, d_tempNormals, d_denseMap, d_updatedTubes, 2 * tubes.size(), nVoxels_X, nVoxels_Y, nVoxels_Z, kernelR, voxelUnitSize, aabbMin, totalVoxels);
-//		cudaDeviceSynchronize();
-//
-//		//smooth (TO DO), simply copy from updated to smoothed currently
-//		//smoothPass(p);
-//		cudaMemcpy(d_smoothedTubes, d_updatedTubes, tubes.size() * 6 * sizeof(float), cudaMemcpyHostToDevice);
-//		cudaDeviceSynchronize();
-//		
-//		//re-transfer original tracks to texTempTubes, for relaxation pass
-//		cudaMemcpy(d_tempTubes, tubes.data(), tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToDevice);
-//		cudaDeviceSynchronize();
-//
-//		//relaxation
-//		cuda_relaxation(d_tempTubes, d_smoothedTubes, d_relaxedTubes, 2 * tubes.size(), relaxFactor);
-//		cudaDeviceSynchronize();
-//
-//		//forceConsective (TO DO)
-//		//forceConsecutivePass();
-//
-//		//update directions (TO DO)
-//		//updateDirectionPass();
-//		cudaMemcpy(d_updatedDirections, d_tempDirections, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToDevice);
-//		cudaDeviceSynchronize();
-//
-//		//update normals (TO DO)
-//		//updateNormalPass();
-//		cudaMemcpy(d_updatedNormals, d_tempNormals, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToDevice);
-//		cudaDeviceSynchronize();
-//
-//		//transfer data to temp buffers
-//		cudaMemcpy(d_tempTubes, d_relaxedTubes, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToDevice);
-//		cudaMemcpy(d_tempDirections, d_updatedDirections, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToDevice);
-//		cudaMemcpy(d_tempNormals, d_updatedNormals, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToDevice);
-//		cudaDeviceSynchronize();
-//	}
-//	//update vertex buffer
-//	float* h_relaxedTubes = (float*)malloc(tubes.size() * 6 * sizeof(float));
-//	float* h_updatedDirections = (float*)malloc(tubes.size() * 6 * sizeof(float));
-//	float* h_udatedNormals = (float*)malloc(tubes.size() * 6 * sizeof(float));
-//
-//	cudaMemcpy(h_relaxedTubes, d_relaxedTubes, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToHost);
-//	cudaMemcpy(h_updatedDirections, d_updatedDirections, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToHost);
-//	cudaMemcpy(h_udatedNormals, d_updatedNormals, tubes.size() * 6 * sizeof(float), cudaMemcpyDeviceToHost);
-//	cudaDeviceSynchronize();
-//
-//	transferDataHostToGL(h_relaxedTubes, VBOLines, tubes.size() * 6 * sizeof(float));
-//	transferDataHostToGL(h_updatedDirections, DBOLines, tubes.size() * 6 * sizeof(float));
-//	transferDataHostToGL(h_udatedNormals, NBOLines, tubes.size() * 6 * sizeof(float));
-//
-//	//DEBUG
-//	int* h_debug_int = (int*)malloc(totalVoxels * sizeof(int));
-//	cudaMemcpy(h_debug_int, d_voxelCount, totalVoxels * sizeof(int), cudaMemcpyDeviceToHost);
-//	//for (int i = 0; i < totalVoxels; i++) {
-//	//	if(h_debug_int[i]>0)
-//	//	std::cout << h_debug_int[i];
-//	//}
-//}
-//
-//void Instance::transferDataHostToGL(void* hostMem, GLuint glBuffer, size_t copySize) {
-//	glBindBuffer(GL_TEXTURE_BUFFER, glBuffer);
-//	glBufferData(GL_TEXTURE_BUFFER, copySize, hostMem, GL_STATIC_DRAW);
-//
-//	// Unbind buffers
-//	glBindBuffer(GL_ARRAY_BUFFER, 0);
-//
-//	//For synchronization
-//	glMemoryBarrier(GL_ALL_BARRIER_BITS);
-//}
-
-//DEBUG
-void Instance::testSmoothing() {
-	float p = 0.5 / 25;
-	int smoothL = p * nVoxels_Z;
-
-	glBindBuffer(GL_TEXTURE_BUFFER, texUpdatedTubes);
-	glBufferData(GL_TEXTURE_BUFFER, tubes.size() * 6 * sizeof(float), tubes.data(), GL_STATIC_DRAW);
-
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, texUpdatedTubes);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, texIsFiberEndpoint);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, texSmoothedTubes);
-
-	smoothShader->use();
-	smoothShader->setInt("totalSize", 2 * tubes.size());
-	smoothShader->setFloat("smoothFactor", smoothFactor);
-	smoothShader->setInt("smoothL", smoothL);
-	smoothShader->setFloat("voxelUnitSize", voxelUnitSize);
-
-	glDispatchCompute(1 + (unsigned int)2 * tubes.size() / 128, 1, 1);
-
-	glMemoryBarrier(GL_ALL_BARRIER_BITS);
-
-	forceConsecutivePass();
-
-	transferDataGPU(texSmoothedTubes, VBOLines, tubes.size() * 6 * sizeof(float));
 }
 
 int Instance::getNVoxelsX() {
@@ -1224,15 +809,19 @@ void Instance::slicing(glm::vec3 pos, glm::vec3 dir) {
 		return;
 	if (glm::dot(dir, dir) < 1e-3)
 		return;
+
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texRelaxedLines);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, VBOLines);
+
 	slicingPos = pos;
 	slicingDir = dir;
 
 	slicingShader->use();
-	slicingShader->setInt("totalSize", tubes.size());
+	slicingShader->setInt("totalSize", lineBufferSize/2);
 	slicingShader->setVec3("pos", slicingPos);
 	slicingShader->setVec3("dir", dir);
 
-	glDispatchCompute(1 + (unsigned int)tubes.size() / 128, 1, 1);
+	glDispatchCompute(1 + (unsigned int)(lineBufferSize / 2) / 128, 1, 1);
 
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 }
@@ -1244,7 +833,8 @@ void Instance::updateEnableSlicing(glm::vec3 pos, glm::vec3 dir) {
 	if (enableSlicling)
 		slicing(slicingPos, slicingDir);
 	else
-		transferDataGPU(texRelaxedTubes, VBOLines, sizeof(float) * 6 * tubes.size());
+		//transferDataGPU(texRelaxedLines, VBOLines, sizeof(float) * 3 * tracks.size());
+		trackToLinePass(texRelaxedTracks, VBOLines);
 }
 
 void Instance::setMaterial(float _roughness, float _metallic) {
@@ -1257,8 +847,7 @@ void Instance::getMaterial(float* _roughness, float* _metallic) {
 }
 
 void Instance::activate() {
-	recreateTextures();
-	initSSBOBinding();
+	createTextures();
 	isActivated = true;
 }
 
@@ -1269,21 +858,23 @@ void Instance::deactivate() {
 
 void Instance::destroyTextures() {
 	GLuint buffersToDelete[] = {
-	VBOLines,
-	NBOLines,
-	DBOLines,
-	texTempTubes,
-	texUpdatedTubes,
-	texSmoothedTubes,
-	texRelaxedTubes,
-	texTempNormals,
-	texUpdatedNormals,
-	texTempDirections,
-	texUpdatedDirections,
-	texVoxelCount,
-	texIsFiberEndpoint
+    VBOLines,
+    DBOLines,
+    texTempTracks,
+    texUpdatedTracks,
+    texSmoothedTracks,
+    texRelaxedTracks,
+    texTempNormals,
+    texUpdatedNormals,
+    texTempDirections,
+    texUpdatedDirections,
+    texVoxelCount,
+    texIsFiberBegin,
+	texIsFiberEnd,
+	texTrackId,
+	texRelaxedLines
 	};
-	glDeleteBuffers(13, buffersToDelete);
+	glDeleteBuffers(15, buffersToDelete);
 
 	glDeleteVertexArrays(1,&VAOLines);
 
@@ -1291,76 +882,67 @@ void Instance::destroyTextures() {
 		texDenseX,
 		texDenseY,
 		texDenseMap,
-		
 	};
 	glDeleteTextures(3, texturesToDelete);
 }
 
-void Instance::recreateTextures() {
+void Instance::createTextures() {
 	glGenVertexArrays(1, &VAOLines);
 	glGenBuffers(1, &VBOLines);
-	glGenBuffers(1, &NBOLines);
 	glGenBuffers(1, &DBOLines);
 
 	glBindVertexArray(VAOLines);
 	glBindBuffer(GL_ARRAY_BUFFER, VBOLines);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * tubes.size(), tubes.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, size_t(lineBufferSize) * 3 * sizeof(float), NULL, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
 	glEnableVertexAttribArray(0);
 
-	glBindBuffer(GL_ARRAY_BUFFER, NBOLines);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * normals.size(), normals.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, DBOLines);
+	glBufferData(GL_ARRAY_BUFFER, size_t(lineBufferSize) * 3 * sizeof(float), NULL, GL_STATIC_DRAW);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
 	glEnableVertexAttribArray(1);
-
-	glBindBuffer(GL_ARRAY_BUFFER, DBOLines);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * directions.size(), directions.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-	glEnableVertexAttribArray(2);
 
 	glBindVertexArray(0);
 
 	//temp tracks
-	glGenBuffers(1, &texTempTubes);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texTempTubes);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
+	glGenBuffers(1, &texTempTracks);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texTempTracks);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, tracks.size() * 3 * sizeof(float), NULL, GL_STATIC_DRAW);
 
 	//updated tracks
-	glGenBuffers(1, &texUpdatedTubes);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texUpdatedTubes);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
+	glGenBuffers(1, &texUpdatedTracks);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texUpdatedTracks);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, tracks.size() * 3 * sizeof(float), NULL, GL_STATIC_DRAW);
 
 	//smoothed tracks
-	glGenBuffers(1, &texSmoothedTubes);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texSmoothedTubes);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
+	glGenBuffers(1, &texSmoothedTracks);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texSmoothedTracks);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, tracks.size() * 3 * sizeof(float), NULL, GL_STATIC_DRAW);
 
 	//relaxed tracks
-	glGenBuffers(1, &texRelaxedTubes);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texRelaxedTubes);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
-
-	transferDataGPU(VBOLines, texRelaxedTubes, tubes.size() * 6 * sizeof(float));
+	glGenBuffers(1, &texRelaxedTracks);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texRelaxedTracks);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, tracks.size() * 3 * sizeof(float), NULL, GL_STATIC_DRAW);
 
 	//temp normals
 	glGenBuffers(1, &texTempNormals);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texTempNormals);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, tracks.size(), NULL, GL_STATIC_DRAW);
 
 	//updated normals
 	glGenBuffers(1, &texUpdatedNormals);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texUpdatedNormals);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, tracks.size(), NULL, GL_STATIC_DRAW);
 
 	//temp directions
 	glGenBuffers(1, &texTempDirections);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texTempDirections);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, tracks.size(), NULL, GL_STATIC_DRAW);
 
 	//updated directions
 	glGenBuffers(1, &texUpdatedDirections);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texUpdatedDirections);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, tubes.size() * 6 * sizeof(float), NULL, GL_STATIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, tracks.size(), NULL, GL_STATIC_DRAW);
 
 	//voxelCount (1-D buffer)
 	glGenBuffers(1, &texVoxelCount);
@@ -1388,9 +970,68 @@ void Instance::recreateTextures() {
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, nVoxels_X, nVoxels_Y, nVoxels_Z, 0, GL_RED, GL_FLOAT, NULL);
 
-	//isFiberEndpoint
-	glGenBuffers(1, &texIsFiberEndpoint);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texIsFiberEndpoint);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, isFiberEndpoint.size() * sizeof(int), isFiberEndpoint.data(), GL_STATIC_DRAW);
+	//isFiberBegin
+	glGenBuffers(1, &texIsFiberBegin);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texIsFiberBegin);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, isFiberBegin.size() * sizeof(int), isFiberBegin.data(), GL_STATIC_DRAW);
 
+	//isFiberEnd
+	glGenBuffers(1, &texIsFiberEnd);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texIsFiberEnd);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, isFiberEnd.size() * sizeof(int), isFiberEnd.data(), GL_STATIC_DRAW);
+
+	//trackId
+	glGenBuffers(1, &texTrackId);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texTrackId);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, trackId.size() * sizeof(int), trackId.data(), GL_STATIC_DRAW);
+
+	//relaxedLines
+	glGenBuffers(1, &texRelaxedLines);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texRelaxedLines);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, size_t(lineBufferSize) * 3 * sizeof(float), NULL, GL_STATIC_DRAW);
+
+	//init VBO by original tracks (using a compute shader)
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texTempTracks);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, tracks.size() * 3 * sizeof(float), tracks.data(), GL_STATIC_DRAW);
+	trackToLinePass(texTempTracks,VBOLines);
+
+	//init texRelaxedlines for slicing
+	transferDataGPU(VBOLines, texRelaxedLines, size_t(lineBufferSize) * 3 * sizeof(float));
+
+	//init DBO (using a compute shader)
+	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, texRelaxedTracks);
+	//glBufferData(GL_SHADER_STORAGE_BUFFER, tracks.size() * 3 * sizeof(float), tracks.data(), GL_STATIC_DRAW);
+	//updateDirectionPass();
+	//trackToLinePass(texUpdatedDirections, DBOLines);
+
+	//DEBUG
+	glBindBuffer(GL_ARRAY_BUFFER, DBOLines);
+	glBufferData(GL_ARRAY_BUFFER, size_t(lineBufferSize) * 3 * sizeof(float), directions.data(), GL_STATIC_DRAW);
+}
+
+//DEBUG
+void Instance::updateTubes(std::vector<glm::vec3>& currentTracks) {
+	tubes.clear();
+	int offset = 0;
+	for (int i = 0; i < trackOffset.size(); i++) {
+		for (int j = trackOffset[i]; j < trackOffset[i] + trackSize[i] - 1; j++) {
+			/*tubes.push_back(Tube{ currentTracks[j] ,currentTracks[j + 1]});*/
+			tubes.push_back(Tube{ currentTracks.at(j) ,currentTracks.at(j + 1) });
+			float leng = glm::dot(currentTracks[j] - currentTracks[j + 1], currentTracks[j] - currentTracks[j + 1]);
+			if (j == trackOffset[i]) {
+				isFiberEndpoint.push_back(1);
+			}
+			else {
+				isFiberEndpoint.push_back(0);
+				isFiberEndpoint.push_back(0);
+			}
+		}
+		isFiberEndpoint.push_back(1);
+	}
+
+	for (int i = 0; i < tubes.size(); i++) {
+		glm::vec3 dir = glm::normalize(tubes[i].p1 - tubes[i].p2);
+		directions.push_back(dir);
+		directions.push_back(dir);
+	}
 }

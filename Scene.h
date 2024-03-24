@@ -52,8 +52,7 @@ private:
 	ComputeShader* smoothShader;
 	ComputeShader* relaxShader;
 	ComputeShader* updateDirectionShader;
-	ComputeShader* updateNormalShader;
-	ComputeShader* forceConsecutiveShader;
 	ComputeShader* slicingShader;
+	ComputeShader* trackToLinesShader;
 
 };

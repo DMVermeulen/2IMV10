@@ -9,6 +9,10 @@ layout (binding = 1, std430) buffer voxelCount {
     uint voxelCountData[];
 };
 
+layout(binding = 6) buffer isFiberEndpoint {
+    int isFiberEndpointData[];
+};
+
 uniform int totalSize;
 uniform int nVoxels_X;
 uniform int nVoxels_Y;
@@ -19,7 +23,9 @@ uniform int totalVoxels;
 
 void main() {
 	int globalID = int(gl_GlobalInvocationID.x);
-		
+	
+	//if ((globalID < totalSize) && (globalID%2==0)) {
+	
 	//1-D buffer implementation
 	if (globalID < totalSize) {
 	    vec3 point = vec3(oriTubesData[globalID*3],oriTubesData[globalID*3+1],oriTubesData[globalID*3+2]);
@@ -31,6 +37,9 @@ void main() {
 		index = min(index, totalVoxels-1);
 		index = max(int(0),index);
 		atomicAdd(voxelCountData[index], 1);
+		//voxelCountData[index]+=1;
+		if(1==isFiberEndpointData[globalID])
+		   atomicAdd(voxelCountData[index], 1);	
 	}
 	
 }

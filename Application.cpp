@@ -165,6 +165,7 @@ void Application::renderUI() {
 		static float contrast = 0.5;
 		static float colorInterval = 0;
 		static float brightness = 0;
+		static float saturation = 1;
 		static float sharpening = 0;
 		static int counter = 0;
 		static glm::vec3 slicingPos;
@@ -356,6 +357,9 @@ void Application::renderUI() {
 			}
 			if (ImGui::SliderFloat("Brightness", &brightness, 0.0f, 1.0f)) {
 				renderer.setBrightness(brightness);
+			}
+			if (ImGui::SliderFloat("Saturation", &saturation, 0.0f, 1.0f)) {
+				renderer.setSaturation(saturation);
 			}
 			if (ImGui::SliderFloat("Sharpening", &sharpening, 0.0f, 1.0f)) {
 				renderer.setSharpening(sharpening);

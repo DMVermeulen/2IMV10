@@ -467,7 +467,7 @@ void Renderer::ssaoPass() {
 
 void Renderer::postProcessingPass() {
 
-	//contrast + illuminance
+	//contrast + brightness + saturation
 	glDisable(GL_DEPTH_TEST);
 	glBindFramebuffer(GL_FRAMEBUFFER, framebufferPostPass);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -476,6 +476,7 @@ void Renderer::postProcessingPass() {
 	glBindTexture(GL_TEXTURE_2D, colorBufferSSAOPass);
 	postPassShader->setFloat("contrast", contrast);
 	postPassShader->setFloat("brightness", brightness);
+	postPassShader->setFloat("saturation", saturation);
 	renderQuad();
 	glBindVertexArray(0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -543,6 +544,10 @@ void Renderer::setContrast(float _contrast) {
 
 void Renderer::setBrightness(float _brightness) {
 	brightness = _brightness;
+}
+
+void Renderer::setSaturation(float _saturation) {
+	saturation = _saturation;
 }
 
 void Renderer::setSharpening(float _sharpening) {

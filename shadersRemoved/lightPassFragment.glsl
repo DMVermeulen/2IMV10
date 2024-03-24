@@ -141,7 +141,7 @@ void main() {
             albedo = vec3(0,0,1);
             break;
     }
-
+	  
 	if(LIGHTING_MODE_NORMAL == lightingMode){
 	   fragColor = vec4(albedo,1.0);
 	}

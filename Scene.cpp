@@ -17,9 +17,8 @@ void Scene::initComputeShaders() {
 	smoothShader = new ComputeShader("shaders/smooth.cs");
 	relaxShader = new ComputeShader("shaders/relaxation.cs");
 	updateDirectionShader = new ComputeShader("shaders/updateDirections.cs");
-	updateNormalShader = new ComputeShader("shaders/updateNormals.cs");
-	forceConsecutiveShader = new ComputeShader("shaders/forceConsecutive.cs");
 	slicingShader = new ComputeShader("shaders/slicing.cs");
+	trackToLinesShader = new ComputeShader("shaders/trackToLines.cs");
 }
 
 void Scene::addInstance(std::string filePath) {
@@ -33,9 +32,8 @@ void Scene::addInstance(std::string filePath) {
 		std::make_shared<ComputeShader>(*smoothShader),
 		std::make_shared<ComputeShader>(*relaxShader),
 		std::make_shared<ComputeShader>(*updateDirectionShader),
-		std::make_shared<ComputeShader>(*updateNormalShader),
-		std::make_shared<ComputeShader>(*forceConsecutiveShader),
-		std::make_shared<ComputeShader>(*slicingShader)
+		std::make_shared<ComputeShader>(*slicingShader),
+		std::make_shared<ComputeShader>(*trackToLinesShader)
 	));
 }
 
