@@ -30,11 +30,11 @@ uniform vec3 viewPos;
 const vec3 ambient = vec3(0.1,0,0);
 
 //LineAO parameter settings
-int nScale = 3;
+int nScale = 1;
 int nSampleBase = 64;
-float radiusBase = ;
-float deltaR = ;
-
+float radiusBase = 2.0;
+float radiusMax = 50;
+float deltaR = 10;
 
 void main()
 {
@@ -48,10 +48,11 @@ void main()
     vec3 bitangent = cross(normal, tangent);
     mat3 TBN = mat3(tangent, bitangent, normal);
 	
-    float occlusionTotal = 0.0;
+    float occlusionTotal = 0;
 	int nSample = nSampleBase;
 	int sampleStep = 1;
 	
+	//float deltaR = (radiusMax-radiusBase)/nScale;
 	// iterate over multiple scales
     for(int k=0;k<nScale;k++){
 	   float radius = radiusBase+k*deltaR;
@@ -79,14 +80,14 @@ void main()
 		
            // check for occlusion
 		   float rangeCheck = smoothstep(0.0, 1.0, radius / abs(myDepth - pivotDepth));
-           occlusionStep += (pivotDepth >= myDepth + bias ? 1.0 : 0.0);//* rangeCheck; 	
+           occlusionStep += (pivotDepth >= myDepth + bias ? 1.0 : 0.0)* rangeCheck; 	
 	   }
 	   occlusionStep = 1.0-(occlusionStep/nSample);
 	   occlusionTotal += occlusionStep;
 	   nSample/=2;
 	   sampleStep*=2;
 	}
-	
+	occlusionTotal/=nScale;
 	FragColor = vec4(occlusionTotal * (texture(shadedColor,UV).xyz+ambient), 1.0f);
 	
 	//color flattening

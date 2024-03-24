@@ -33,7 +33,7 @@ void Renderer::init() {
 
 	ssaoPassShader = std::unique_ptr< Shader >(new Shader(
 		"shaders/fullQuad.glsl",
-		"shaders/ssaoPassFragment.glsl")
+		"shaders/lineAOFragment.glsl")
 		);
 	texVisPassShader = std::unique_ptr< Shader >(new Shader(
 		"shaders/fullQuad.glsl",
