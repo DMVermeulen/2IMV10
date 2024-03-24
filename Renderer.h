@@ -41,6 +41,7 @@ private:
 	void initTexVisPassObjects();
 	void recreateObjects();
 
+	void updateFrame();
 	void geometryPass();
 	void shadingPass();
 	void ssaoPass();
@@ -58,6 +59,7 @@ private:
 	GLuint gPos;           
 	GLuint gNormal;
 	GLuint gDir;
+	GLuint gMotionVector;
 	GLuint depthMap;
 	std::unique_ptr<Shader> geoPassShader;
 
@@ -80,6 +82,10 @@ private:
 	std::unique_ptr<Shader> postPassShader;
 	GLuint framebufferPostPass;
 	GLuint colorBufferPostPass;
+
+	//For motion bluring
+	glm::mat4 lastCameraView; //record the view matrix from last frame, used for motion blurring
+	glm::mat4 cameraView;
 
 	//For sharpening pass
 	std::unique_ptr<Shader> sharpeningPassShader;

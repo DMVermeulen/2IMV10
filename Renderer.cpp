@@ -4,7 +4,6 @@
 #include <random>
 
 Renderer::Renderer() {
-
 }
 
 Renderer::~Renderer() {
@@ -17,6 +16,9 @@ void Renderer::init() {
 	//glGetIntegerv(GL_VIEWPORT, value);
 	//width = value[2];
 	//height = value[3];
+
+	lastCameraView = camera->GetViewMatrix();
+	cameraView = camera->GetViewMatrix();
 	
 	//load shaders
 	geoPassShader = std::unique_ptr< Shader >(new Shader(
@@ -94,8 +96,14 @@ void Renderer::recreateObjects() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gDir, 0);
 
-	GLuint attachmentsGeo[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
-	glDrawBuffers(3, attachmentsGeo);
+	glBindTexture(GL_TEXTURE_2D, gMotionVector);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gMotionVector, 0);
+
+	GLuint attachmentsGeo[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2,  GL_COLOR_ATTACHMENT3 };
+	glDrawBuffers(4, attachmentsGeo);
 
 	glBindRenderbuffer(GL_RENDERBUFFER, depthMap);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
@@ -151,12 +159,18 @@ void Renderer::recreateObjects() {
 }
 
 void Renderer::renderFrame() {
+	updateFrame();
 	geometryPass();
 	shadingPass();
 	ssaoPass();
 	//textureVisPass();
 	postProcessingPass();
 	sharpeningPass();
+}
+
+void Renderer::updateFrame() {
+	lastCameraView = cameraView;
+	cameraView = camera->GetViewMatrix();
 }
 
 void Renderer::initGeoPassObjects() {
@@ -186,8 +200,15 @@ void Renderer::initGeoPassObjects() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gDir, 0);
 
-	GLuint attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
-	glDrawBuffers(3, attachments);
+	glGenTextures(1, &gMotionVector);
+	glBindTexture(GL_TEXTURE_2D, gMotionVector);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gMotionVector, 0);
+
+	GLuint attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
+	glDrawBuffers(4, attachments);
 
 	//bind depth map for depth testing
 	glGenRenderbuffers(1, &depthMap);
@@ -343,6 +364,7 @@ void Renderer::initPostPassObjects() {
 
 	postPassShader->enable();
 	postPassShader->setInt("imageWithAO", 0);
+	postPassShader->setInt("motionVectorScreen", 1);
 	postPassShader->disable();
 }
 
@@ -368,8 +390,9 @@ void Renderer::geometryPass() {
 	geoPassShader->enable();
 	glm::mat4 proj = glm::perspective(glm::radians(camera->Zoom), (float)width / (float)height, 0.1f, 1000.0f);
 	glUniformMatrix4fv(glGetUniformLocation(geoPassShader->getProgramId(), "proj"), 1, GL_FALSE, &proj[0][0]);
-	glm::mat4 view = camera->GetViewMatrix();
-	glUniformMatrix4fv(glGetUniformLocation(geoPassShader->getProgramId(), "view"), 1, GL_FALSE, &view[0][0]);
+	//glm::mat4 view = camera->GetViewMatrix();
+	glUniformMatrix4fv(glGetUniformLocation(geoPassShader->getProgramId(), "view"), 1, GL_FALSE, &cameraView[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(geoPassShader->getProgramId(), "lastView"), 1, GL_FALSE, &lastCameraView[0][0]);
 
 	geoPassShader->setVec3("viewPos", camera->Position);
 
@@ -474,6 +497,8 @@ void Renderer::postProcessingPass() {
 	postPassShader->enable();
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, colorBufferSSAOPass);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, gMotionVector);
 	postPassShader->setFloat("contrast", contrast);
 	postPassShader->setFloat("brightness", brightness);
 	postPassShader->setFloat("saturation", saturation);
