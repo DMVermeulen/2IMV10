@@ -833,8 +833,8 @@ void Instance::updateEnableSlicing(glm::vec3 pos, glm::vec3 dir) {
 	if (enableSlicling)
 		slicing(slicingPos, slicingDir);
 	else
-		//transferDataGPU(texRelaxedLines, VBOLines, sizeof(float) * 3 * tracks.size());
-		trackToLinePass(texRelaxedTracks, VBOLines);
+		transferDataGPU(texRelaxedLines, VBOLines, lineBufferSize*3*sizeof(float));
+		//trackToLinePass(texRelaxedTracks, VBOLines);
 }
 
 void Instance::setMaterial(float _roughness, float _metallic) {
