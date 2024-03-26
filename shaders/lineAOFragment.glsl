@@ -30,7 +30,7 @@ uniform vec3 viewPos;
 const vec3 ambient = vec3(0.1,0,0);
 
 //LineAO parameter settings
-int nScale = 1;
+int nScale = 5;
 int nSampleBase = 64;
 float radiusBase = 2.0;
 float radiusMax = 50;

@@ -17,7 +17,7 @@ public:
 	void drawActivatedInstanceLineMode(float lineWidth);
 	//void setRadius(float r);
 	//void setNTris(int n);
-	void edgeBundling(float p, float radius, int nTris);
+	void edgeBundling(float p);
 	void slicing(glm::vec3 pos, glm::vec3 dir);
 	void setActivatedInstance(int id);
 	int getInstanceNVoxelsX();
@@ -32,6 +32,7 @@ public:
 	void setInstanceMaterial(float roughness, float metallic);
 	void getInstanceMaterial(float* roughness, float* metallic);
 	bool isEmpty();
+	void getInstanceSettings(float* bundle, bool* enableSlicing, glm::vec3* slicePos, glm::vec3* sliceDir);
 private:
 	//parameters used to build triangles from streamlines
 	float radius = 0.1f;
@@ -54,5 +55,5 @@ private:
 	ComputeShader* updateDirectionShader;
 	ComputeShader* slicingShader;
 	ComputeShader* trackToLinesShader;
-
+	ComputeShader* denseEstimationShader3D;
 };

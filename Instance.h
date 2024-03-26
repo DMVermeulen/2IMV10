@@ -20,7 +20,8 @@ public:
 		std::shared_ptr<ComputeShader> relaxShader,
 		std::shared_ptr<ComputeShader> updateDirectionShader,
 		std::shared_ptr<ComputeShader> slicingShader,
-		std::shared_ptr<ComputeShader> _trackToLinesShader
+		std::shared_ptr<ComputeShader> _trackToLinesShader,
+		std::shared_ptr<ComputeShader> denseEstimationShader3D
 	);
 	~Instance();
 	int getNumberVertices();
@@ -33,7 +34,7 @@ public:
 	//void recreateMeshNewRadius(float radius, int nTris);
 	//void recreateMeshNewNTris(float radius, int nTris);
 	//void edgeBundling(float p, float radius, int nTris);
-	void edgeBundlingGPU(float p, float radius, int nTris);
+	void edgeBundlingGPU(float p);
 	//void edgeBundlingCUDA(float p, float radius, int nTris);
 	int getNVoxelsX();
 	int getNVoxelsY();
@@ -47,6 +48,7 @@ public:
 	void slicing(glm::vec3 pos, glm::vec3 dir);
 	void setMaterial(float roughness, float metallic);
 	void getMaterial(float* roughness, float* metallic);
+	void getSettings(float* bundle, bool* _enableSlicing, glm::vec3* slicePos, glm::vec3* sliceDir);
 	void activate();
 	void deactivate();
 
@@ -86,7 +88,8 @@ private:
 	void trackResampling();
 
 	//edge-bundling related structures on host 
-	uint32_t nVoxels_Z = 400;  //500
+	float bundle=0;
+	uint32_t nVoxels_Z = 450;  //500
 	uint32_t nVoxels_X;
 	uint32_t nVoxels_Y;
 	float voxelUnitSize;
@@ -96,7 +99,7 @@ private:
 	//const float smoothFactor = 0.99; 
 	//float smoothL;
 	//const float relaxFactor = 0.85;
-	float smoothFactor = 0.99; 
+	float smoothFactor = 0.99;
 	float smoothL;
     float relaxFactor = 0.85;
 	std::vector<uint32_t> voxelAssignment; //persistently stored
@@ -158,8 +161,8 @@ private:
 
 	//Slicing related
 	bool enableSlicling=false;
-	glm::vec3 slicingPos;
-	glm::vec3 slicingDir;
+	glm::vec3 slicingPos = glm::vec3(0);
+	glm::vec3 slicingDir = glm::vec3(0);
 
 	//PBR materials
 	float roughness=0.2f;
@@ -199,4 +202,6 @@ private:
 	std::vector<glm::vec3>directions;
 	std::vector<int>isFiberEndpoint;
 	void updateTubes(std::vector<glm::vec3>& currentTracks);
+	std::shared_ptr<ComputeShader> denseEstimationShader3D;
+	GLuint texDenseMapTest;
 };

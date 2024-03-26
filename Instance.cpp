@@ -4,6 +4,7 @@
 #include <glm/gtc/constants.hpp>
 #include<iostream>
 #include <algorithm>
+#include <chrono>
 
 #define INFINITE 999999999
 
@@ -18,10 +19,11 @@ Instance::Instance(
 	std::shared_ptr<ComputeShader> _relaxShader,
 	std::shared_ptr<ComputeShader> _updateDirectionShader,
 	std::shared_ptr<ComputeShader> _slicingShader,
-	std::shared_ptr<ComputeShader> _trackToLinesShader
+	std::shared_ptr<ComputeShader> _trackToLinesShader,
+	std::shared_ptr<ComputeShader> _denseEstimationShader3D
 )
-	//:denseEstimationShader1D("shaders/denseEstimation.cs")
 	:voxelCountShader(_voxelCountShader),
+	denseEstimationShader3D(_denseEstimationShader3D),
 	denseEstimationShaderX(_denseEstimationShaderX),
 	denseEstimationShaderY(_denseEstimationShaderY),
 	denseEstimationShaderZ(_denseEstimationShaderZ),
@@ -543,7 +545,8 @@ void Instance::resampling() {
 //	return newTracks;
 //}
 
-void Instance::edgeBundlingGPU(float _p, float radius, int nTris) {
+void Instance::edgeBundlingGPU(float _p) {
+	bundle = _p;
 	//repeat bundling for several iterations
 
 	//TESTING
@@ -609,19 +612,25 @@ void Instance::voxelCountPass() {
 
 //voxelVount->denseMap
 void Instance::denseEstimationPass(float p) {
-	//denseEstimationShader1D.use();
-	//denseEstimationShader1D.setInt("totalSize", totalVoxels);
-	//denseEstimationShader1D.setInt("nVoxels_X", nVoxels_X);
-	//denseEstimationShader1D.setInt("nVoxels_Y", nVoxels_Y);
-	//denseEstimationShader1D.setInt("nVoxels_Z", nVoxels_Z);
-	//denseEstimationShader1D.setInt("kernelR", p*nVoxels_Z);
-	////denseEstimationShader.setInt("kernelR", 4);
-	//denseEstimationShader1D.setFloat("voxelUnitSize", voxelUnitSize);
+	//auto start = std::chrono::high_resolution_clock::now();
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texVoxelCount);
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, texDenseMapTest);
+	//denseEstimationShader3D->use();
+	//denseEstimationShader3D->setInt("totalSize", totalVoxels);
+	//denseEstimationShader3D->setInt("nVoxels_X", nVoxels_X);
+	//denseEstimationShader3D->setInt("nVoxels_Y", nVoxels_Y);
+	//denseEstimationShader3D->setInt("nVoxels_Z", nVoxels_Z);
+	//denseEstimationShader3D->setInt("kernelR", p*nVoxels_Z);
+	//denseEstimationShader3D->setFloat("voxelUnitSize", voxelUnitSize);
 	//glDispatchCompute(1+(unsigned int)totalVoxels/128, 1, 1);
 
 	//// make sure writing to buffer has finished before read
 	//glMemoryBarrier(GL_ALL_BARRIER_BITS);
+	//auto end = std::chrono::high_resolution_clock::now();
+	//auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+	////std::cout << "Elapsed time: " << duration.count() << " microseconds" << std::endl;
 
+	auto start = std::chrono::high_resolution_clock::now();
 	//Convolution on X
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texVoxelCount);
 	glBindImageTexture(0, texDenseX, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
@@ -663,6 +672,10 @@ void Instance::denseEstimationPass(float p) {
 	denseEstimationShaderZ->setFloat("voxelUnitSize", voxelUnitSize);
 	glDispatchCompute(1 + (unsigned int)totalVoxels / 128, 1, 1);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+	auto end = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+	//std::cout << "Elapsed time: " << duration.count() << " microseconds" << std::endl;
 }
 
 //update tubes, stores to texUpdatedTubes
@@ -809,6 +822,8 @@ void Instance::slicing(glm::vec3 pos, glm::vec3 dir) {
 		return;
 	if (glm::dot(dir, dir) < 1e-3)
 		return;
+	if (glm::dot(pos, pos) < 1e-2)
+		return;
 
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texRelaxedLines);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, VBOLines);
@@ -816,10 +831,13 @@ void Instance::slicing(glm::vec3 pos, glm::vec3 dir) {
 	slicingPos = pos;
 	slicingDir = dir;
 
+	glm::vec3 _slicingPos = aabb.minPos+(aabb.maxPos-aabb.minPos)*pos;
+	glm::vec3 _slicingDir = dir;
+
 	slicingShader->use();
 	slicingShader->setInt("totalSize", lineBufferSize/2);
-	slicingShader->setVec3("pos", slicingPos);
-	slicingShader->setVec3("dir", dir);
+	slicingShader->setVec3("pos", _slicingPos);
+	slicingShader->setVec3("dir", _slicingDir);
 
 	glDispatchCompute(1 + (unsigned int)(lineBufferSize / 2) / 128, 1, 1);
 
@@ -848,6 +866,7 @@ void Instance::getMaterial(float* _roughness, float* _metallic) {
 
 void Instance::activate() {
 	createTextures();
+	edgeBundlingGPU(bundle);
 	isActivated = true;
 }
 
@@ -1034,4 +1053,11 @@ void Instance::updateTubes(std::vector<glm::vec3>& currentTracks) {
 		directions.push_back(dir);
 		directions.push_back(dir);
 	}
+}
+
+void Instance::getSettings(float* _bundle, bool* _enableSlicing, glm::vec3* _slicePos, glm::vec3* _sliceDir) {
+	*_bundle = bundle;
+	*_enableSlicing = enableSlicling;
+	*_slicePos = slicingPos;
+	*_sliceDir = slicingDir;
 }

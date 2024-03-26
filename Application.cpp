@@ -158,6 +158,7 @@ void Application::renderUI() {
 		static float tubeRadius = 0.1f;
 		static float tubeGranularity = 1;
 		static float fiberBundling = 0;
+		const static float bundleScaleFactor = 25;
 		static float lineWidth = 0.1f;
 		static float roughness = 0.2f;
 		static float metallic = 0.8f;
@@ -241,7 +242,8 @@ void Application::renderUI() {
 						if (ImGui::Selectable(items[i].c_str(), isSelected)) {
 							currentItemInstance = i;
 							scene.setActivatedInstance(i);
-							//getInstanceSettings();
+							scene.getInstanceSettings(&fiberBundling, &enableSlicing, &slicingPos, &slicingDir);
+							fiberBundling *= bundleScaleFactor;
 							renderer.updateShadingPassInstanceInfo();
 						}
 						if (isSelected)
@@ -269,7 +271,7 @@ void Application::renderUI() {
 			}
 
 			if (ImGui::SliderFloat("bundling", &fiberBundling, 0.0f, 1.0f)) {
-				scene.edgeBundling(fiberBundling/25,tubeRadius, int(8 * tubeGranularity));
+				scene.edgeBundling(fiberBundling/ bundleScaleFactor);
 			}
 		}
 

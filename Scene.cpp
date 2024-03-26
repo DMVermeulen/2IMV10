@@ -19,6 +19,7 @@ void Scene::initComputeShaders() {
 	updateDirectionShader = new ComputeShader("shaders/updateDirections.cs");
 	slicingShader = new ComputeShader("shaders/slicing.cs");
 	trackToLinesShader = new ComputeShader("shaders/trackToLines.cs");
+	denseEstimationShader3D = new ComputeShader("shaders/denseEstimation.cs");
 }
 
 void Scene::addInstance(std::string filePath) {
@@ -33,7 +34,8 @@ void Scene::addInstance(std::string filePath) {
 		std::make_shared<ComputeShader>(*relaxShader),
 		std::make_shared<ComputeShader>(*updateDirectionShader),
 		std::make_shared<ComputeShader>(*slicingShader),
-		std::make_shared<ComputeShader>(*trackToLinesShader)
+		std::make_shared<ComputeShader>(*trackToLinesShader),
+		std::make_shared<ComputeShader>(*denseEstimationShader3D)
 	));
 }
 
@@ -99,13 +101,13 @@ void Scene::drawAllInstancesLineMode(float lineWidth) {
 //	}
 //}
 
-void Scene::edgeBundling(float p, float radius, int nTris) {
+void Scene::edgeBundling(float p) {
 	//for (Instance& instance : instances) {
 	//	//instance.edgeBundling(p,radius,nTris);
 	//	instance.edgeBundlingGPU(p, radius, nTris);
 	//}
 	if (instances.size() > 0)
-		instances.at(activatedInstance).edgeBundlingGPU(p, radius, nTris);
+		instances.at(activatedInstance).edgeBundlingGPU(p);
 	//instances.at(activatedInstance).testSmoothing();
 	//instances.at(activatedInstance).edgeBundlingCUDA(p, radius, nTris);
 }
@@ -164,5 +166,10 @@ void Scene::getInstanceMaterial(float* roughness, float* metallic) {
 
 bool Scene::isEmpty() {
 	return instances.size() == 0;
+}
+
+// return instance settings to GUI when switching instance
+void Scene::getInstanceSettings(float* bundle, bool* enableSlicing, glm::vec3* slicePos, glm::vec3* sliceDir) {
+	instances.at(activatedInstance).getSettings(bundle, enableSlicing,slicePos, sliceDir);
 }
 
