@@ -45,6 +45,7 @@ public:
 	GLuint getDenseMap();
 	GLuint getVoxelCount();
 	void updateEnableSlicing(glm::vec3 pos, glm::vec3 dir);
+	//void slicingReset();
 	void slicing(glm::vec3 pos, glm::vec3 dir);
 	void setMaterial(float roughness, float metallic);
 	void getMaterial(float* roughness, float* metallic);
@@ -89,7 +90,7 @@ private:
 
 	//edge-bundling related structures on host 
 	float bundle=0;
-	uint32_t nVoxels_Z = 450;  //500
+	uint32_t nVoxels_Z = 400;  //500
 	uint32_t nVoxels_X;
 	uint32_t nVoxels_Y;
 	float voxelUnitSize;

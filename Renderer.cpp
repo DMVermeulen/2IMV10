@@ -476,10 +476,11 @@ void Renderer::ssaoPass() {
 	glm::mat4 proj = glm::perspective(glm::radians(camera->Zoom), (float)width / (float)height, 0.1f, 1000.0f);
 	glm::mat4 view = camera->GetViewMatrix();
 	ssaoPassShader->setFloat("colorInterval", colorInterval);
-	ssaoPassShader->setFloat("radius", ssaoRadius);
+	ssaoPassShader->setFloat("radiusMax", ssaoRadius);
 	ssaoPassShader->setMat4("view",view);
 	ssaoPassShader->setMat4("proj", proj);
 	ssaoPassShader->setVec3("viewPos", camera->Position);
+
 
 	renderQuad();
 

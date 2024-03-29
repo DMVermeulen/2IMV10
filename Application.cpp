@@ -71,13 +71,12 @@ void Application::initWindow() {
 #endif
 
 	// Create window with graphics context
-	window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Dear ImGui GLFW+OpenGL3 example", nullptr, nullptr);
+	window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "FiberVisualizer", nullptr, nullptr);
 	if (window == nullptr)
 		std::runtime_error("Create window failed!");
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, window_size_update_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
-	glfwSetScrollCallback(window, scroll_callback);
 	glfwSetWindowIconifyCallback(window, window_iconify_callback);
 	gladLoadGL();
 	glfwSwapInterval(1); // Enable vsync
@@ -158,11 +157,11 @@ void Application::renderUI() {
 		static float tubeRadius = 0.1f;
 		static float tubeGranularity = 1;
 		static float fiberBundling = 0;
-		const static float bundleScaleFactor = 25;
+		const static float bundleScaleFactor = 45;
 		static float lineWidth = 0.1f;
 		static float roughness = 0.2f;
 		static float metallic = 0.8f;
-		static float ssao = 0.2f;
+		static float ssao = 0.4f;
 		static float contrast = 0.5;
 		static float colorInterval = 0;
 		static float brightness = 0;
@@ -223,13 +222,18 @@ void Application::renderUI() {
 				currentItemInstance = int(items.size()) - 1;
 				fileDialog.ClearSelected();
 			}
-
+			ImGui::SameLine();
 			// Remove instance
 			if (ImGui::Button("Remove")) {
 				scene.removeInstance(currentItemInstance);
 				items.erase(items.begin() + currentItemInstance);
-				if (items.size() > 0)
+				if (items.size() > 0) {
+					scene.setActivatedInstance(0);
+					scene.getInstanceSettings(&fiberBundling, &enableSlicing, &slicingPos, &slicingDir);
+					fiberBundling *= bundleScaleFactor;
+					renderer.updateShadingPassInstanceInfo();
 					currentItemInstance = 0;
+				}
 				else
 					currentItemInstance = -1;
 			}
@@ -351,7 +355,7 @@ void Application::renderUI() {
 
 		if (ImGui::CollapsingHeader("Post effects"))
 		{
-			if (ImGui::SliderFloat("SSAO", &ssao, 0.0f, 1.0f)) {
+			if (ImGui::SliderFloat("Ambient occlusion", &ssao, 0.0f, 1.0f)) {
 				renderer.setSSAORadius(ssao*50);
 			}
 			if (ImGui::SliderFloat("Contrast", &contrast, 0.0f, 1.0f)) {
@@ -441,11 +445,6 @@ void Application::processInput(GLFWwindow* window) {
 		camera.ProcessKeyboard(LEFT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.ProcessKeyboard(RIGHT, deltaTime);
-}
-
-void Application::scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-{
-	m_app->camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
 void Application::window_iconify_callback(GLFWwindow* window, int iconified) {

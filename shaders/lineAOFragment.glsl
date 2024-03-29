@@ -11,7 +11,6 @@ uniform sampler2D gDir;
 uniform sampler2D texNoise;
 
 uniform vec3 samples[64];
-uniform float radius;
 uniform float colorInterval;
 
 // parameters (you'd probably want to use them as uniforms to more easily tweak the effect)
@@ -30,11 +29,10 @@ uniform vec3 viewPos;
 const vec3 ambient = vec3(0.1,0,0);
 
 //LineAO parameter settings
-int nScale = 5;
-int nSampleBase = 64;
-float radiusBase = 2.0;
-float radiusMax = 50;
-float deltaR = 10;
+const int nScale = 5;
+const int nSampleBase = 64;
+const float radiusBase = 2.0;
+uniform float radiusMax = 50;
 
 void main()
 {
@@ -52,7 +50,7 @@ void main()
 	int nSample = nSampleBase;
 	int sampleStep = 1;
 	
-	//float deltaR = (radiusMax-radiusBase)/nScale;
+	float deltaR = (radiusMax-radiusBase)/(nScale-1);
 	// iterate over multiple scales
     for(int k=0;k<nScale;k++){
 	   float radius = radiusBase+k*deltaR;

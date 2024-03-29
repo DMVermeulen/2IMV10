@@ -824,6 +824,9 @@ void Instance::slicing(glm::vec3 pos, glm::vec3 dir) {
 		return;
 	if (glm::dot(pos, pos) < 1e-2)
 		return;
+	pos.x += 0.1;
+	pos.y += 0.1;
+	pos.z += 0.1;
 
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texRelaxedLines);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, VBOLines);
@@ -866,7 +869,8 @@ void Instance::getMaterial(float* _roughness, float* _metallic) {
 
 void Instance::activate() {
 	createTextures();
-	edgeBundlingGPU(bundle);
+	if(bundle>0)
+	 edgeBundlingGPU(bundle);
 	isActivated = true;
 }
 

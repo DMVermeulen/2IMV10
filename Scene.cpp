@@ -41,7 +41,7 @@ void Scene::addInstance(std::string filePath) {
 
 void Scene::removeInstance(int insId) {
 	if(insId < instances.size())
-	  instances.erase(instances.begin());
+	  instances.erase(instances.begin()+insId);
 	if (instances.size() > 0)
 		activatedInstance = 0;
 	else
