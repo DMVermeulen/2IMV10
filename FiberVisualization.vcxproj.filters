@@ -28,12 +28,6 @@
     <Filter Include="源文件\Shader">
       <UniqueIdentifier>{233a4d6a-86ec-4a16-8c10-2637eaf7302f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="源文件\cudaKernels">
-      <UniqueIdentifier>{7ccbef34-67d2-42a3-b2cd-8db1f4be2f00}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="头文件\cudaMath">
-      <UniqueIdentifier>{ee378d42-ed83-4baf-9209-8b4092a48e21}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -113,16 +107,8 @@
     <ClInclude Include="Enums.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="helper_math.h">
-      <Filter>头文件\cudaMath</Filter>
-    </ClInclude>
     <ClInclude Include="imfilebrowser.h">
       <Filter>头文件</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <CudaCompile Include="edgeBundlingKernels.cu">
-      <Filter>源文件\cudaKernels</Filter>
-    </CudaCompile>
   </ItemGroup>
 </Project>

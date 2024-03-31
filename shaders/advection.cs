@@ -12,8 +12,8 @@ layout(binding = 1) buffer updatedTracks {
     float updatedTracksData[];
 };
 
-layout(binding = 2) buffer tempNormals {
-    float tempNormalsData[];
+layout(binding = 2) buffer directions {
+    float directionsData[];
 };
 
 
@@ -69,9 +69,15 @@ void main() {
 		vec3 delta;
 		if (dot(grad, grad) < 1e-9)
 		  delta = vec3(0);
-	    else
-		  delta = normalize(grad) * kernelR * voxelUnitSize;
-
+	    else{
+			// constrained advection, project moving vector delta to the orthogonal vector
+			delta = normalize(grad) * kernelR * voxelUnitSize;
+/* 			vec3 dir = vec3(directionsData[globalID*3],directionsData[globalID*3+1],directionsData[globalID*3+2]);
+			vec3 u = cross(dir,cross(delta,dir));
+			u = normalize(u);
+			delta = u*dot(delta,u); */
+		}
+		 
 		updatedTracksData[globalID*3] = oriTracksData[globalID*3]+delta.x;
 		updatedTracksData[globalID*3+1] = oriTracksData[globalID*3+1]+delta.y;
 		updatedTracksData[globalID*3+2] = oriTracksData[globalID*3+2]+delta.z;

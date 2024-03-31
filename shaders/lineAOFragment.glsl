@@ -31,8 +31,14 @@ const vec3 ambient = vec3(0.1,0,0);
 //LineAO parameter settings
 const int nScale = 5;
 const int nSampleBase = 64;
-const float radiusBase = 2.0;
-uniform float radiusMax = 50;
+const float radiusBase = 2.0; 
+uniform float radiusMax = 50;  
+
+//LineAO parameter settings
+//const int nScale = 1;
+//const int nSampleBase = 64;
+//const float radiusBase = 50.0; 
+//float radiusMax = 50;  
 
 void main()
 {

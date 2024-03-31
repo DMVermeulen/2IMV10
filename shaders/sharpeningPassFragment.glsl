@@ -7,6 +7,7 @@ in vec2 UV;
 uniform sampler2D imageData;
 
 uniform float sharpening;
+uniform vec3 bgColor;
 
 void main()
 {
@@ -36,6 +37,6 @@ void main()
     FragColor = vec4(sharpenedColor, 1.0);
 	
     if(color.x==0)
-	  FragColor = vec4(0,0,0,1);
+	  FragColor = vec4(bgColor,1);
 	
 }

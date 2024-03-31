@@ -109,7 +109,7 @@ std::vector<glm::vec3> Instance::readTCK(const std::string& filename) {
 	int count = 0;
 	int debug = 0;
 	trackOffset.push_back(0);
-	int sample = 3;
+	int sample = 4;
 	glm::vec3 center(0);
 	while (!file.eof()) {
 		float x, y, z;
@@ -549,10 +549,13 @@ void Instance::edgeBundlingGPU(float _p) {
 	bundle = _p;
 	//repeat bundling for several iterations
 
-	//TESTING
 	//init texTempTracks with original tracks
 	glBindBuffer(GL_TEXTURE_BUFFER, texTempTracks);
 	glBufferData(GL_TEXTURE_BUFFER, tracks.size() * 3 * sizeof(float), tracks.data(), GL_STATIC_DRAW);
+
+	//init texTempDirections with original directions
+	glBindBuffer(GL_TEXTURE_BUFFER, texTempDirections);
+	glBufferData(GL_TEXTURE_BUFFER, directions.size() * 3 * sizeof(float), directions.data(), GL_STATIC_DRAW);
 
 	float p = _p;
 	for (int i = 0; i < nIters; i++) {
@@ -570,8 +573,13 @@ void Instance::edgeBundlingGPU(float _p) {
 		glBindBuffer(GL_TEXTURE_BUFFER, texTempTracks);
 		glBufferData(GL_TEXTURE_BUFFER, tracks.size() * 3 * sizeof(float), tracks.data(), GL_STATIC_DRAW);
 		relaxationPass();
+		updateDirectionPass();
 
-		transferDataGPU(texRelaxedTracks, texTempTracks, tracks.size() * 3 * sizeof(float));  //copy data from resulting updated to temp for next iteration
+		//copy data from resulting updated to temp for next iteration
+		transferDataGPU(texRelaxedTracks, texTempTracks, tracks.size() * 3 * sizeof(float));  
+		transferDataGPU(texUpdatedDirections, texTempDirections, directions.size() * 3 * sizeof(float));
+
+		//slightly decrease the kernel width to adapt to the increasingly bundled fibers
 		p *= 0.95;
 	}
 	trackToLinePass(texRelaxedTracks,texRelaxedLines);   //map from tracks to lines for rendering
@@ -683,7 +691,7 @@ void Instance::advectionPass(float p) {
 	glBindImageTexture(0, texDenseMap, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texTempTracks);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, texUpdatedTracks);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, texTempNormals);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, texTempDirections);
 
 	advectionShader->use();
 	advectionShader->setInt("totalSize", tracks.size());
@@ -745,9 +753,9 @@ void Instance::updateDirectionPass() {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, texIsFiberEnd);
 
 	updateDirectionShader->use();
-	updateDirectionShader->setInt("totalSize", tracks.size());
+	updateDirectionShader->setInt("totalSize", directions.size());
 
-	glDispatchCompute(1 + (unsigned int)tracks.size() / 128, 1, 1);
+	glDispatchCompute(1 + (unsigned int)directions.size() / 128, 1, 1);
 
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 }

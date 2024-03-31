@@ -516,6 +516,7 @@ void Renderer::sharpeningPass() {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, colorBufferPostPass);
 	sharpeningPassShader->setFloat("sharpening", sharpening);
+	sharpeningPassShader->setVec3("bgColor", bgColor);
 	renderQuad();
 	glBindVertexArray(0);
 	sharpeningPassShader->disable();
@@ -603,6 +604,11 @@ void Renderer::setColorMode(int _colorMode) {
 	colorMode = _colorMode;
 }
 
+//for constant color mapping
 void Renderer::setColorConstant(glm::vec3 constant) {
 	colorConstant = constant;
+}
+
+void Renderer::setBgColor(glm::vec3 _bgColor) {
+	bgColor = _bgColor;
 }

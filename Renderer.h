@@ -26,6 +26,7 @@ public:
 	void setLightingMode(int lightingMode);
 	void setColorMode(int colorMode);
 	void setColorConstant(glm::vec3 constant);
+	void setBgColor(glm::vec3 bgColor);
 	void updateViewportSize(int width, int height);
 private:
 	Scene* scene = nullptr; 
@@ -109,6 +110,7 @@ private:
 	int lightingMode = 0;
 	int colorMode = 0;
 	glm::vec3 colorConstant = glm::vec3(0, 0, 1);
+	glm::vec3 bgColor = glm::vec3(0, 0, 0);  //background color
 
 	//commonly used helper function (may moved to class RenderPassBase)
 	void createQuadObjects();

@@ -90,7 +90,7 @@ private:
 
 	//edge-bundling related structures on host 
 	float bundle=0;
-	uint32_t nVoxels_Z = 400;  //500
+	uint32_t nVoxels_Z = 420;  //500
 	uint32_t nVoxels_X;
 	uint32_t nVoxels_Y;
 	float voxelUnitSize;
@@ -102,7 +102,7 @@ private:
 	//const float relaxFactor = 0.85;
 	float smoothFactor = 0.99;
 	float smoothL;
-    float relaxFactor = 0.85;
+	float relaxFactor = 0.85;
 	std::vector<uint32_t> voxelAssignment; //persistently stored
 	std::vector<uint32_t> voxelOffset; 
 	std::vector<uint32_t> voxelSize; 

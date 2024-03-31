@@ -157,7 +157,7 @@ void Application::renderUI() {
 		static float tubeRadius = 0.1f;
 		static float tubeGranularity = 1;
 		static float fiberBundling = 0;
-		const static float bundleScaleFactor = 45;
+		const static float bundleScaleFactor = 25; //45
 		static float lineWidth = 0.1f;
 		static float roughness = 0.2f;
 		static float metallic = 0.8f;
@@ -173,7 +173,8 @@ void Application::renderUI() {
 		static bool enableSlicing = false;
 		static int colorMode = 0;
 		static int lightingMode = 0;
-		glm::vec3 colorMapConstant=glm::vec3(0,0,1);
+		static glm::vec3 colorMapConstant=glm::vec3(0,0,1);
+		static glm::vec3 bgColor = glm::vec3(0, 0, 0);
 		static std::vector<std::string> items = { "instance 0 ", "instance 1" };
 
 		//ImGui::Begin("Settings");                          // Create a window called "Hello, world!" and append into it.
@@ -303,6 +304,13 @@ void Application::renderUI() {
 		//		scene.setInstanceMaterial(roughness, metallic);
 		//	}
 		//}
+
+		if (ImGui::CollapsingHeader("Background"))
+		{
+			if (ImGui::ColorPicker3("BgColor", (float*)&bgColor)) {
+				renderer.setBgColor(bgColor);
+			}
+		}
 
 		if (ImGui::CollapsingHeader("Colormap"))
 		{
