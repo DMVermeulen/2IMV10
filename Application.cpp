@@ -130,8 +130,8 @@ void Application::mainLoop() {
 		ImGui::NewFrame();
 
 		// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-		if (show_demo_window)
-			ImGui::ShowDemoWindow(&show_demo_window);
+		//if (show_demo_window)
+		//	ImGui::ShowDemoWindow(&show_demo_window);
 
 		renderUI();
 
@@ -152,6 +152,11 @@ void Application::mainLoop() {
 }
 
 void Application::renderUI() {
+	renderSettingPanel();
+	renderTipsPanel();
+}
+
+void Application::renderSettingPanel() {
 		static float cameraSpeed = 0.0f;
 		static float mouseSensitivity = 0.0f;
 		static float tubeRadius = 0.1f;
@@ -177,30 +182,13 @@ void Application::renderUI() {
 		static glm::vec3 bgColor = glm::vec3(0, 0, 0);
 		static std::vector<std::string> items = { "instance 0 ", "instance 1" };
 
-		//ImGui::Begin("Settings");                          // Create a window called "Hello, world!" and append into it.
-
-		//ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-		//ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-		//ImGui::Checkbox("Another Window", &show_another_window);
-
-
-		////if (ImGui::SliderFloat("tube size", &tubeRadius, 0.0f, 10.0f)) {
-		////	scene.setRadius(tubeRadius);
-		////}
-		////if (ImGui::SliderFloat("tube granularity", &tubeGranularity, 0.0f, 1.0f)) {
-		////	scene.setNTris(int(8 * tubeGranularity));
-		////}
-
-		//ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-		//if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-		//	counter++;
-		//ImGui::SameLine();
-		//ImGui::Text("counter = %d", counter);
-
 		//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 		//ImGui::End();
 
+		//ImGui::SetNextWindowPos(settingsPanelPos);
+		//ImGui::SetNextWindowSize(settingsPanelSize);
+
+		ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 300, 0));
 
 		ImGui::Begin("Settings");
 		if (ImGui::CollapsingHeader("Models"))
@@ -397,16 +385,29 @@ void Application::renderUI() {
 	}
 }
 
+void Application::renderTipsPanel() {
+
+}
+
 void Application::renderFrame() {
 	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	renderer.renderFrame();
 	//glfwSwapBuffers(window);
 }
 
+//handle window resizing
 void Application::window_size_update_callback(GLFWwindow* window, int width, int height) {
 	m_app->SCR_WIDTH = width;
 	m_app->SCR_HEIGHT = height;
 	glViewport(0, 0, width, height);
+
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImVec2 work_pos = viewport->WorkPos;
+	ImVec2 work_size = viewport->WorkSize;
+	//update position of the settings panel
+	m_app->settingsPanelPos = ImVec2(work_pos.x + work_size.x - m_app->settingsPanelWidth, work_pos.y);
+	m_app->settingsPanelSize = ImVec2(m_app->settingsPanelWidth, work_size.y);
+
 	//update renderer
 	if(width>0 && height>0)
 	 m_app->renderer.updateViewportSize(width, height);

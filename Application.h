@@ -46,6 +46,11 @@ private:
 	float lastY;
 	bool firstMouse = true;
 
+	//UI related
+	const int settingsPanelWidth = 300;
+	ImVec2 settingsPanelPos;
+	ImVec2 settingsPanelSize;
+
 	GLFWwindow* window;
 	void initWindow();
 	void initScene();
@@ -60,6 +65,8 @@ private:
 
 	//UI related
 	void renderUI();
+	void renderSettingPanel();
+	void renderTipsPanel();
 	//UI callbacks
 
 };

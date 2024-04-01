@@ -109,7 +109,7 @@ std::vector<glm::vec3> Instance::readTCK(const std::string& filename) {
 	int count = 0;
 	int debug = 0;
 	trackOffset.push_back(0);
-	int sample = 4;
+	int sample = 2;
 	glm::vec3 center(0);
 	while (!file.eof()) {
 		float x, y, z;
@@ -182,7 +182,7 @@ void Instance::trackResampling() {
 	//	aveLength.push_back(sum);
 	//}
 	
-	float delta = nVoxels_Z * voxelUnitSize / 150;
+	float delta = nVoxels_Z * voxelUnitSize / 120;
 	//float delta = voxelUnitSize;
 	std::vector<glm::vec3>resampledTracks;
 	std::vector<uint32_t>tempTrackOffset;
