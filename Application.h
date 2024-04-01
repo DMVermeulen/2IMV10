@@ -19,11 +19,10 @@ public:
 	Application();
 	~Application();
 	void run();
-	static Application* m_app;
+	static Application* m_app;  	//self pointer (used by static method)
 	//UI operations
 private:
 	bool suspendRender=false;
-	//self pointer (used by static method)
 	//UI related
 	ImGuiIO io;
 	ImGui::FileBrowser fileDialog;

@@ -55,8 +55,9 @@ Instance::Instance(
 	//isActivated = true;
 }
 
+//explicitly destroy opengl objects
 Instance::~Instance() {
-
+	destroyTextures();
 }
 
 int Instance::getNumberVertices(){

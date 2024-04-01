@@ -5,7 +5,17 @@ Scene::Scene() {
 }
 
 Scene::~Scene() {
-
+	delete voxelCountShader;
+	delete denseEstimationShaderX;
+	delete denseEstimationShaderY;
+	delete denseEstimationShaderZ;
+	delete advectionShader;
+	delete smoothShader;
+	delete relaxShader;
+	delete updateDirectionShader;
+	delete slicingShader;
+	delete trackToLinesShader;
+	delete denseEstimationShader3D;
 }
 
 void Scene::initComputeShaders() {

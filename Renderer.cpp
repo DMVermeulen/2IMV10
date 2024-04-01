@@ -6,8 +6,33 @@
 Renderer::Renderer() {
 }
 
+//destroy textures explicitly
 Renderer::~Renderer() {
+	//delete textures
+	glDeleteTextures(1, &gPos);
+	glDeleteTextures(1, &gDir);
+	glDeleteTextures(1, &gMotionVector);
+	glDeleteTextures(1, &noiseTexture);
+	glDeleteTextures(1, &colorBufferShadingPass);
+	glDeleteTextures(1, &colorBufferSSAOPass);
+	glDeleteTextures(1, &colorBufferPostPass);
+	
+	//delelte render buffer
+	glDeleteRenderbuffers(1, &depthMap);
+	
+	//delete framebuffers
+	glDeleteFramebuffers(1,&gBuffer);
+	glDeleteFramebuffers(1, &framebufferShadingPass);
+	glDeleteFramebuffers(1, &framebufferSSAOPass);
+	glDeleteFramebuffers(1, &framebufferPostPass);
 
+	//delete buffers
+	glDeleteBuffers(1, &quadVBO);
+	glDeleteBuffers(1, &quadIBO);
+	glDeleteBuffers(1, &quadTex);
+
+	//delete vertex arrays
+	glDeleteVertexArrays(1, &quadVAO);
 }
 
 void Renderer::init() {

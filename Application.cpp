@@ -185,9 +185,6 @@ void Application::renderSettingPanel() {
 		//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 		//ImGui::End();
 
-		//ImGui::SetNextWindowPos(settingsPanelPos);
-		//ImGui::SetNextWindowSize(settingsPanelSize);
-
 		ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 300, 0));
 
 		ImGui::Begin("Settings");
@@ -401,14 +398,7 @@ void Application::window_size_update_callback(GLFWwindow* window, int width, int
 	m_app->SCR_HEIGHT = height;
 	glViewport(0, 0, width, height);
 
-	ImGuiViewport* viewport = ImGui::GetMainViewport();
-	ImVec2 work_pos = viewport->WorkPos;
-	ImVec2 work_size = viewport->WorkSize;
-	//update position of the settings panel
-	m_app->settingsPanelPos = ImVec2(work_pos.x + work_size.x - m_app->settingsPanelWidth, work_pos.y);
-	m_app->settingsPanelSize = ImVec2(m_app->settingsPanelWidth, work_size.y);
-
-	//update renderer
+	//update the renderer
 	if(width>0 && height>0)
 	 m_app->renderer.updateViewportSize(width, height);
 
