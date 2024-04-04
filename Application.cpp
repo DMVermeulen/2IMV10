@@ -1,5 +1,6 @@
 #include"Application.h"
 #include <stdio.h>
+#include"imgui_internal.h"
 
 Application* Application::m_app = nullptr;
 
@@ -157,17 +158,18 @@ void Application::renderUI() {
 }
 
 void Application::renderSettingPanel() {
-		static float cameraSpeed = 0.0f;
+		static float cameraSpeed = 80.0f;
 		static float mouseSensitivity = 0.0f;
 		static float tubeRadius = 0.1f;
 		static float tubeGranularity = 1;
+		static bool enableBundling = false;
 		static float fiberBundling = 0;
 		const static float bundleScaleFactor = 25; //45
 		static float lineWidth = 0.1f;
 		static float roughness = 0.2f;
 		static float metallic = 0.8f;
-		static float ssao = 0.4f;
-		static float contrast = 0.5;
+		static float ssao = 0.5f;
+		static float contrast = 0.6f;
 		static float colorInterval = 0;
 		static float brightness = 0;
 		static float saturation = 1;
@@ -220,8 +222,12 @@ void Application::renderSettingPanel() {
 					renderer.updateShadingPassInstanceInfo();
 					currentItemInstance = 0;
 				}
-				else
+				else {
 					currentItemInstance = -1;
+					enableBundling = false;
+					fiberBundling = 0;
+					scene.updateFiberBundlingStatus(enableBundling);
+				}
 			}
 			
 			//Select an instance to visualize
@@ -249,35 +255,95 @@ void Application::renderSettingPanel() {
 			if (ImGui::SliderFloat("camera speed", &cameraSpeed, 0.0f, 200.0f)) {
 				camera.setSpeed(cameraSpeed);
 			}
-			if (ImGui::SliderFloat("mouse sensitivity", &mouseSensitivity, 0.0f, 1.0f)) {
-				camera.setSpeed(mouseSensitivity);
-			}
 		}
 
-		if (ImGui::CollapsingHeader("Bundling"))
+		if (ImGui::CollapsingHeader("Fiber Bundling"))
 		{
+			if (ImGui::Checkbox("Enable", &enableBundling)) {
+				 scene.updateFiberBundlingStatus(enableBundling);
+				 if (false == enableBundling)
+					 fiberBundling = 0;
+			}
+
+			if (enableBundling) {
+				if (ImGui::SliderFloat("bundling", &fiberBundling, 0.0f, 1.0f)) {
+					scene.edgeBundling(fiberBundling/ bundleScaleFactor);
+				}
+			}
+
 			if (ImGui::SliderFloat("Line width", &lineWidth, 0.0f, 1.0f)) {
 				renderer.setLineWidth(lineWidth*3);
 			}
 
-			if (ImGui::SliderFloat("bundling", &fiberBundling, 0.0f, 1.0f)) {
-				scene.edgeBundling(fiberBundling/ bundleScaleFactor);
-			}
 		}
 
 		if (ImGui::CollapsingHeader("Slicing"))
 		{
-			if (ImGui::Checkbox("Enable", &enableSlicing)) {
-				scene.updateInstanceEnableSlicing(slicingPos,slicingDir);
+			if (ImGui::Checkbox("Enable Slicing", &enableSlicing)) {
+				scene.updateInstanceEnableSlicing(slicingPos,slicingDir,enableSlicing);
 			}
 
-			if (ImGui::SliderFloat3("slicing pos", &slicingPos.x, 0, 1.0f)) {
-				scene.slicing(slicingPos, slicingDir);
-			}
+			//if (ImGui::SliderFloat3("slicing pos", &slicingPos.x, 0, 1.0f)) {
+			//	scene.slicing(slicingPos, slicingDir);
+			//}
 
-			if (ImGui::SliderFloat3("slicing dir", &slicingDir.x, 0, 1.0f)) {
+			//if (ImGui::SliderFloat3("slicing dir", &slicingDir.x, 0, 1.0f)) {
+			//	scene.slicing(slicingPos, slicingDir);
+			//}
+
+			ImGui::LabelText("##label SlicingCenter", "Center");
+			ImGui::BeginGroup(); 
+			ImGui::PushItemWidth(70);
+			if (ImGui::SliderFloat("##CenterX", &slicingPos.x, 0, 1.0f, "X: %.2f")) {
 				scene.slicing(slicingPos, slicingDir);
 			}
+			ImGui::PopItemWidth();
+
+			ImGui::SameLine(); 
+
+			ImGui::PushItemWidth(70);
+			if (ImGui::SliderFloat("##CenterY", &slicingPos.y, 0, 1.0f, "Y: %.2f")) {
+				scene.slicing(slicingPos, slicingDir);
+			}
+			ImGui::PopItemWidth();
+
+			ImGui::SameLine();
+
+			ImGui::PushItemWidth(70);
+			if (ImGui::SliderFloat("##CenterZ", &slicingPos.z, 0, 1.0f, "Z: %.2f")) {
+				scene.slicing(slicingPos, slicingDir);
+			}
+			ImGui::PopItemWidth();
+
+			ImGui::EndGroup(); 
+
+
+			ImGui::LabelText("##label SlicingDir", "Direction");
+			ImGui::BeginGroup();
+			ImGui::PushItemWidth(70);
+			if (ImGui::SliderFloat("##DirX", &slicingDir.x, 0, 1.0f, "X: %.2f")) {
+				scene.slicing(slicingPos, slicingDir);
+			}
+			ImGui::PopItemWidth();
+
+			ImGui::SameLine();
+
+			ImGui::PushItemWidth(70);
+			if (ImGui::SliderFloat("##DirY", &slicingDir.y, 0, 1.0f, "Y: %.2f")) {
+				scene.slicing(slicingPos, slicingDir);
+			}
+			ImGui::PopItemWidth();
+
+			ImGui::SameLine();
+
+			ImGui::PushItemWidth(70);
+			if (ImGui::SliderFloat("##DirZ", &slicingDir.z, 0, 1.0f, "Z: %.2f")) {
+				scene.slicing(slicingPos, slicingDir);
+			}
+			ImGui::PopItemWidth();
+
+			ImGui::EndGroup();
+
 		}
 
 		//if (ImGui::CollapsingHeader("Materials"))

@@ -448,14 +448,6 @@ void Renderer::shadingPass() {
 	glBindTexture(GL_TEXTURE_2D, gNormal);
 	glUniform1i(glGetUniformLocation(lightPassShader->getProgramId(), "gNormal"), 2);
 
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_3D, scene->getInstanceDenseMap());
-	glUniform1i(glGetUniformLocation(lightPassShader->getProgramId(), "denseMap"), 3);
-
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_3D, scene->getInstanceVoxelCount());
-	glUniform1i(glGetUniformLocation(lightPassShader->getProgramId(), "voxelCount"), 4);
-
 	lightPassShader->setVec3("viewPos",camera->Position);
 	lightPassShader->setInt("colorMode", this->renderMode);
 	float rough, metal;
@@ -608,12 +600,7 @@ void Renderer::setSharpening(float _sharpening) {
 
 void Renderer::updateShadingPassInstanceInfo() {
 	lightPassShader->enable();
-	lightPassShader->setInt("nVoxels_X", scene->getInstanceNVoxelsX());
-	lightPassShader->setInt("nVoxels_Y", scene->getInstanceNVoxelsY());
-	lightPassShader->setInt("nVoxels_Z", scene->getInstanceNVoxelsZ());
 	lightPassShader->setVec3("aabbMin", scene->getInstanceAABBMin());
-	lightPassShader->setFloat("voxelUnitSize", scene->getInstanceVoxelUnitSize());
-	lightPassShader->setInt("totalVoxels", scene->getInstanceTotalVoxels());
 	lightPassShader->disable();
 }
 

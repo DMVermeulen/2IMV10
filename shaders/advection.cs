@@ -72,10 +72,11 @@ void main() {
 	    else{
 			// constrained advection, project moving vector delta to the orthogonal vector
 			delta = normalize(grad) * kernelR * voxelUnitSize;
-/* 			vec3 dir = vec3(directionsData[globalID*3],directionsData[globalID*3+1],directionsData[globalID*3+2]);
+
+			vec3 dir = vec3(directionsData[globalID*3],directionsData[globalID*3+1],directionsData[globalID*3+2]);
 			vec3 u = cross(dir,cross(delta,dir));
 			u = normalize(u);
-			delta = u*dot(delta,u); */
+			delta = u*dot(delta,u);
 		}
 		 
 		updatedTracksData[globalID*3] = oriTracksData[globalID*3]+delta.x;

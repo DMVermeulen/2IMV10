@@ -3,6 +3,7 @@
 #include<string>
 #include"structures.h"
 #include"Instance.h"
+#include"FiberBundler.h"
 
 class Scene {
 public:
@@ -17,6 +18,7 @@ public:
 	void drawActivatedInstanceLineMode(float lineWidth);
 	//void setRadius(float r);
 	//void setNTris(int n);
+	void enableFiberBundling();
 	void edgeBundling(float p);
 	void slicing(glm::vec3 pos, glm::vec3 dir);
 	void setActivatedInstance(int id);
@@ -28,11 +30,12 @@ public:
 	int getInstanceTotalVoxels();
 	GLuint getInstanceDenseMap();
 	GLuint getInstanceVoxelCount();
-	void updateInstanceEnableSlicing(glm::vec3 pos, glm::vec3 dir);
+	void updateInstanceEnableSlicing(glm::vec3 pos, glm::vec3 dir,bool enable);
 	void setInstanceMaterial(float roughness, float metallic);
 	void getInstanceMaterial(float* roughness, float* metallic);
 	bool isEmpty();
 	void getInstanceSettings(float* bundle, bool* enableSlicing, glm::vec3* slicePos, glm::vec3* sliceDir);
+	void updateFiberBundlingStatus(bool enable);
 private:
 	//parameters used to build triangles from streamlines
 	float radius = 0.1f;
@@ -45,15 +48,8 @@ private:
 	//void updateMeshNewNTris();
 
 	//Compute shaders to accelerate edge bundling, shared by all instances
-	ComputeShader* voxelCountShader;
-	ComputeShader* denseEstimationShaderX;
-	ComputeShader* denseEstimationShaderY;
-	ComputeShader* denseEstimationShaderZ;
-	ComputeShader* advectionShader;
-	ComputeShader* smoothShader;
-	ComputeShader* relaxShader;
-	ComputeShader* updateDirectionShader;
 	ComputeShader* slicingShader;
 	ComputeShader* trackToLinesShader;
-	ComputeShader* denseEstimationShader3D;
+
+	FiberBundler bundler;
 };

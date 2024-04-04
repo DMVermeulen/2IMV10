@@ -5,47 +5,22 @@ Scene::Scene() {
 }
 
 Scene::~Scene() {
-	delete voxelCountShader;
-	delete denseEstimationShaderX;
-	delete denseEstimationShaderY;
-	delete denseEstimationShaderZ;
-	delete advectionShader;
-	delete smoothShader;
-	delete relaxShader;
-	delete updateDirectionShader;
 	delete slicingShader;
 	delete trackToLinesShader;
-	delete denseEstimationShader3D;
 }
 
 void Scene::initComputeShaders() {
-	denseEstimationShaderX = new ComputeShader("shaders/denseEstimationX.cs") ;
-	denseEstimationShaderY = new ComputeShader("shaders/denseEstimationY.cs");
-	denseEstimationShaderZ = new ComputeShader("shaders/denseEstimationZ.cs");
-	advectionShader = new ComputeShader("shaders/advection.cs");
-	voxelCountShader = new ComputeShader("shaders/voxelCount.cs");
-	smoothShader = new ComputeShader("shaders/smooth.cs");
-	relaxShader = new ComputeShader("shaders/relaxation.cs");
-	updateDirectionShader = new ComputeShader("shaders/updateDirections.cs");
 	slicingShader = new ComputeShader("shaders/slicing.cs");
 	trackToLinesShader = new ComputeShader("shaders/trackToLines.cs");
-	denseEstimationShader3D = new ComputeShader("shaders/denseEstimation.cs");
+
+	bundler.init();
 }
 
 void Scene::addInstance(std::string filePath) {
 	instances.push_back(Instance(
 		filePath,
-		std::make_shared<ComputeShader>(*voxelCountShader),
-		std::make_shared<ComputeShader>(*denseEstimationShaderX),
-		std::make_shared<ComputeShader>(*denseEstimationShaderY),
-		std::make_shared<ComputeShader>(*denseEstimationShaderZ),
-		std::make_shared<ComputeShader>(*advectionShader),
-		std::make_shared<ComputeShader>(*smoothShader),
-		std::make_shared<ComputeShader>(*relaxShader),
-		std::make_shared<ComputeShader>(*updateDirectionShader),
 		std::make_shared<ComputeShader>(*slicingShader),
-		std::make_shared<ComputeShader>(*trackToLinesShader),
-		std::make_shared<ComputeShader>(*denseEstimationShader3D)
+		std::make_shared<ComputeShader>(*trackToLinesShader)
 	));
 }
 
@@ -66,102 +41,87 @@ void Scene::setActivatedInstance(int id) {
 	activatedInstance = id;
 	if (id >= 0 && id < instances.size()) {
 		instances.at(id).activate();
+		if (bundler.isEnabled()) {
+			bundler.switcheToInstance(&(instances.at(id)));
+		}
 	}
-}
-
-std::vector<Vertex>& Scene::getInstanceVertices(int insId) {
-	return instances.at(insId).getVertices();
-}
-
-std::vector<uint32_t>& Scene::getInstanceIndicies(int insId) {
-	return instances.at(insId).getIndices();
 }
 
 void Scene::drawActivatedInstanceLineMode(float lineWidth) {
-	if(instances.size()>0)
-		instances.at(activatedInstance).drawLineMode(lineWidth);
-}
-
-void Scene::drawAllInstancesLineMode(float lineWidth) {
-	for (Instance& instance : instances) {
-		instance.drawLineMode(lineWidth);
+	if (instances.size() > 0) {
+		Instance& activeInstance = instances.at(activatedInstance);
+		if(bundler.isEnabled())
+			activeInstance.drawLineMode(lineWidth,bundler.getLineBufferSize());
+		else
+			activeInstance.drawLineMode(lineWidth,activeInstance.getOriLineBufferSize());
 	}
 }
 
-//void Scene::setRadius(float r) {
-//	radius = r;
-//	updateMeshNewRadius();
-//	
-//}
-//
-//void Scene::setNTris(int n) {
-//	nTris = n;
-//	updateMeshNewNTris();
-//}
-
-//void Scene::updateMeshNewRadius() {
-//	for (Instance& instance : instances) {
-//		instance.recreateMeshNewRadius(radius, nTris);
-//	}
-//}
-//
-//void Scene::updateMeshNewNTris() {
-//	for (Instance& instance : instances) {
-//		instance.recreateMeshNewNTris(radius, nTris);
-//	}
-//}
+void Scene::updateFiberBundlingStatus(bool enable) {
+	if (instances.empty())
+		return;
+	Instance& activeInstance = instances.at(activatedInstance);
+	if (enable)
+		bundler.enable(&activeInstance);
+	else {
+		bundler.disable();
+		activeInstance.setBundleValue(0);
+		activeInstance.restoreOriginalLines();
+		if (activeInstance.isSlicingEnabled()) {
+			activeInstance.slicing(activeInstance.getOriFibers());
+		}
+	}
+}
 
 void Scene::edgeBundling(float p) {
-	//for (Instance& instance : instances) {
-	//	//instance.edgeBundling(p,radius,nTris);
-	//	instance.edgeBundlingGPU(p, radius, nTris);
-	//}
-	if (instances.size() > 0)
-		instances.at(activatedInstance).edgeBundlingGPU(p);
-	//instances.at(activatedInstance).testSmoothing();
-	//instances.at(activatedInstance).edgeBundlingCUDA(p, radius, nTris);
-}
-
-int Scene::getInstanceNVoxelsX() {
-	return instances.at(activatedInstance).getNVoxelsX();
-}
-
-int Scene::getInstanceNVoxelsY() {
-	return instances.at(activatedInstance).getNVoxelsY();
-}
-
-int Scene::getInstanceNVoxelsZ() {
-	return instances.at(activatedInstance).getNVoxelsZ();
+	//if (instances.size() > 0)
+	//	instances.at(activatedInstance).edgeBundlingGPU(p);
+	if (instances.size() > 0 && bundler.isEnabled()) {
+		bundler.edgeBundlingGPU(p);
+		instances.at(activatedInstance).setBundleValue(p);
+	}
 }
 
 glm::vec3 Scene::getInstanceAABBMin() {
 	return instances.at(activatedInstance).getAABBMin();
 }
 
-float Scene::getInstanceVoxelUnitSize() {
-	return instances.at(activatedInstance).getVoxelUnitSize();
-}
-
-int Scene::getInstanceTotalVoxels() {
-	return instances.at(activatedInstance).getTotalVoxels();
-}
-
-GLuint Scene::getInstanceDenseMap() {
-	return instances.at(activatedInstance).getDenseMap();
-}
-
-GLuint Scene::getInstanceVoxelCount() {
-	return instances.at(activatedInstance).getVoxelCount();
-}
-
 void Scene::slicing(glm::vec3 pos, glm::vec3 dir) {
-	if (instances.size() > 0)
-		instances.at(activatedInstance).slicing(pos, dir);
+	if (instances.size() > 0) {
+		Instance& activeInstance = instances.at(activatedInstance);
+		activeInstance.setSlicingPlane(pos, dir);
+		GLuint slicingSource;
+		if (bundler.isEnabled() && bundler.getBundleValue() > 0)
+			slicingSource = bundler.getBundledFibers();
+		else
+			slicingSource = activeInstance.getOriFibers();
+		activeInstance.slicing(slicingSource);
+	}
 }
 
-void Scene::updateInstanceEnableSlicing(glm::vec3 pos, glm::vec3 dir) {
-	if (instances.size() > 0)
-		instances.at(activatedInstance).updateEnableSlicing(pos, dir);
+void Scene::updateInstanceEnableSlicing(glm::vec3 pos, glm::vec3 dir, bool enable) {
+	//if (instances.size() > 0)
+	//	instances.at(activatedInstance).updateEnableSlicing(pos, dir);
+	if (instances.size() > 0) {
+		Instance& activeInstance = instances.at(activatedInstance);
+		activeInstance.setEnableSlicing(enable);
+		if (enable) {
+			activeInstance.setSlicingPlane(pos, dir);
+			GLuint slicingSource;
+			if (bundler.isEnabled() && bundler.getBundleValue() > 0)
+				slicingSource = bundler.getBundledFibers();
+			else
+				slicingSource = activeInstance.getOriFibers();
+			activeInstance.slicing(slicingSource);
+		}
+		else {
+			if (bundler.isEnabled() && bundler.getBundleValue() > 0) {
+				bundler.updateInstanceFibers();
+			}
+			else
+				activeInstance.restoreOriginalLines();
+		}
+	}
 }
 
 void Scene::setInstanceMaterial(float roughness, float metallic) {

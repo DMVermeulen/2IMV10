@@ -14,14 +14,8 @@ uniform sampler2D worldPos;
 uniform sampler2D gDir;
 uniform sampler2D gNormal;
 uniform vec3 viewPos;
-uniform sampler3D denseMap;
 
-uniform int nVoxels_X;
-uniform int nVoxels_Y;
-uniform int nVoxels_Z;
 uniform vec3 aabbMin;
-uniform float voxelUnitSize;
-uniform int totalVoxels;
 
 uniform float roughness;
 uniform float metallic;

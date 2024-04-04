@@ -28,6 +28,9 @@
     <Filter Include="源文件\Shader">
       <UniqueIdentifier>{233a4d6a-86ec-4a16-8c10-2637eaf7302f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="源文件\FiberBundler">
+      <UniqueIdentifier>{36a71092-0194-4c98-9d9b-a8405e7a86d1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -78,6 +81,9 @@
     <ClCompile Include="camera.cpp">
       <Filter>源文件\Application</Filter>
     </ClCompile>
+    <ClCompile Include="FiberBundler.cpp">
+      <Filter>源文件\FiberBundler</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h">
@@ -109,6 +115,9 @@
     </ClInclude>
     <ClInclude Include="imfilebrowser.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="FiberBundler.h">
+      <Filter>源文件\FiberBundler</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
