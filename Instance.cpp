@@ -55,7 +55,7 @@ std::vector<glm::vec3> Instance::readTCK(const std::string& filename) {
 	int count = 0;
 	int debug = 0;
 	trackOffset.push_back(0);
-	int sample = 2;
+	int sample = 1;
 	glm::vec3 center(0);
 	while (!file.eof()) {
 		float x, y, z;

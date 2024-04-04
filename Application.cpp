@@ -31,7 +31,7 @@ void Application::run() {
 
 void Application::initScene() {
 	scene.initComputeShaders();
-	scene.addInstance("models\\whole_brain.tck"); 
+	//scene.addInstance("models\\whole_brain.tck"); 
 	scene.addInstance("models\\AF_left.tck");
 	scene.setActivatedInstance(0);
 	//scene.removeInstance(0);
@@ -182,7 +182,8 @@ void Application::renderSettingPanel() {
 		static int lightingMode = 0;
 		static glm::vec3 colorMapConstant=glm::vec3(0,0,1);
 		static glm::vec3 bgColor = glm::vec3(0, 0, 0);
-		static std::vector<std::string> items = { "instance 0 ", "instance 1" };
+		//static std::vector<std::string> items = { "instance 0 ", "instance 1" };
+		static std::vector<std::string> items = { "instance 0 " };
 
 		//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 		//ImGui::End();
@@ -207,6 +208,7 @@ void Application::renderSettingPanel() {
 				items.push_back(instanceName);
 				scene.addInstance(fileName);
 				scene.setActivatedInstance(int(items.size()) - 1);
+				scene.getInstanceSettings(&fiberBundling, &enableSlicing, &slicingPos, &slicingDir);
 				currentItemInstance = int(items.size()) - 1;
 				fileDialog.ClearSelected();
 			}
