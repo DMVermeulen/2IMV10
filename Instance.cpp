@@ -407,9 +407,17 @@ void Instance::updateDirectionBuffer(GLuint newDirectionBuffer, size_t copySize)
 
 //restore the original fibers when either slicing or bundling is set to disabled
 void Instance::restoreOriginalLines() {
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, texTempTracks);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, tracks.size() * 3 * sizeof(float), tracks.data(), GL_STATIC_DRAW);
-	trackToLinePass(texTempTracks, VBOLines);
+	glBindBuffer(GL_ARRAY_BUFFER, VBOLines);
+	glBufferData(GL_ARRAY_BUFFER, oriLineBufferSize * 3 * sizeof(float), NULL, GL_DYNAMIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, DBOLines);
+	glBufferData(GL_ARRAY_BUFFER, oriLineBufferSize * 3 * sizeof(float), NULL, GL_DYNAMIC_DRAW);
+
+	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, texTempTracks);
+	//glBufferData(GL_SHADER_STORAGE_BUFFER, tracks.size() * 3 * sizeof(float), tracks.data(), GL_STATIC_DRAW);
+	//trackToLinePass(texTempTracks, VBOLines);
+
+	transferDataGPU(texOriFibers, VBOLines, oriLineBufferSize * 3 * sizeof(float));
 
 	glBindBuffer(GL_ARRAY_BUFFER, DBOLines);
 	glBufferData(GL_ARRAY_BUFFER, oriLineBufferSize * 3 * sizeof(float), directions.data(), GL_DYNAMIC_DRAW);
