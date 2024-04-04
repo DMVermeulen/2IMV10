@@ -451,7 +451,246 @@ void Application::renderSettingPanel() {
 }
 
 void Application::renderTipsPanel() {
+	ImGui::Begin("Tips");
+	//if (ImGui::CollapsingHeader("Models"))
+	//{
+	//	static int currentItemInstance = 0;
+	//	// Add new instance
+	//	if (ImGui::Button("Add..."))
+	//		fileDialog.Open();
+	//	fileDialog.Display();
+	//	if (fileDialog.HasSelected())
+	//	{
+	//		std::string fileName = fileDialog.GetSelected().string();
+	//		std::size_t pos = fileName.find_last_of('\\'); // Find the last '\' character
+	//		std::string instanceName;
+	//		if (pos != std::string::npos)
+	//			instanceName = fileName.substr(pos + 1);
+	//		items.push_back(instanceName);
+	//		scene.addInstance(fileName);
+	//		scene.setActivatedInstance(int(items.size()) - 1);
+	//		scene.getInstanceSettings(&fiberBundling, &enableSlicing, &slicingPos, &slicingDir);
+	//		currentItemInstance = int(items.size()) - 1;
+	//		fileDialog.ClearSelected();
+	//	}
+	//	ImGui::SameLine();
+	//	// Remove instance
+	//	if (ImGui::Button("Remove")) {
+	//		scene.removeInstance(currentItemInstance);
+	//		items.erase(items.begin() + currentItemInstance);
+	//		if (items.size() > 0) {
+	//			scene.setActivatedInstance(0);
+	//			scene.getInstanceSettings(&fiberBundling, &enableSlicing, &slicingPos, &slicingDir);
+	//			fiberBundling *= bundleScaleFactor;
+	//			renderer.updateShadingPassInstanceInfo();
+	//			currentItemInstance = 0;
+	//		}
+	//		else {
+	//			currentItemInstance = -1;
+	//			enableBundling = false;
+	//			fiberBundling = 0;
+	//			scene.updateFiberBundlingStatus(enableBundling);
+	//		}
+	//	}
 
+	//	//Select an instance to visualize
+	//	if (items.size() > 0) {
+	//		if (ImGui::BeginCombo("##instances", items[currentItemInstance].c_str())) {
+	//			for (int i = 0; i < items.size(); i++) {
+	//				bool isSelected = (currentItemInstance == i);
+	//				if (ImGui::Selectable(items[i].c_str(), isSelected)) {
+	//					currentItemInstance = i;
+	//					scene.setActivatedInstance(i);
+	//					scene.getInstanceSettings(&fiberBundling, &enableSlicing, &slicingPos, &slicingDir);
+	//					fiberBundling *= bundleScaleFactor;
+	//					renderer.updateShadingPassInstanceInfo();
+	//				}
+	//				if (isSelected)
+	//					ImGui::SetItemDefaultFocus();
+	//			}
+	//			ImGui::EndCombo();
+	//		}
+	//	}
+	//}
+
+	//if (ImGui::CollapsingHeader("View"))
+	//{
+	//	if (ImGui::SliderFloat("camera speed", &cameraSpeed, 0.0f, 200.0f)) {
+	//		camera.setSpeed(cameraSpeed);
+	//	}
+	//}
+
+	//if (ImGui::CollapsingHeader("Fiber Bundling"))
+	//{
+	//	if (ImGui::Checkbox("Enable", &enableBundling)) {
+	//		scene.updateFiberBundlingStatus(enableBundling);
+	//		if (false == enableBundling)
+	//			fiberBundling = 0;
+	//	}
+
+	//	if (enableBundling) {
+	//		if (ImGui::SliderFloat("bundling", &fiberBundling, 0.0f, 1.0f)) {
+	//			scene.edgeBundling(fiberBundling / bundleScaleFactor);
+	//		}
+	//	}
+
+	//	if (ImGui::SliderFloat("Line width", &lineWidth, 0.0f, 1.0f)) {
+	//		renderer.setLineWidth(lineWidth * 3);
+	//	}
+
+	//}
+
+	//if (ImGui::CollapsingHeader("Slicing"))
+	//{
+	//	if (ImGui::Checkbox("Enable Slicing", &enableSlicing)) {
+	//		scene.updateInstanceEnableSlicing(slicingPos, slicingDir, enableSlicing);
+	//	}
+
+	//	//if (ImGui::SliderFloat3("slicing pos", &slicingPos.x, 0, 1.0f)) {
+	//	//	scene.slicing(slicingPos, slicingDir);
+	//	//}
+
+	//	//if (ImGui::SliderFloat3("slicing dir", &slicingDir.x, 0, 1.0f)) {
+	//	//	scene.slicing(slicingPos, slicingDir);
+	//	//}
+
+	//	ImGui::LabelText("##label SlicingCenter", "Center");
+	//	ImGui::BeginGroup();
+	//	ImGui::PushItemWidth(70);
+	//	if (ImGui::SliderFloat("##CenterX", &slicingPos.x, 0, 1.0f, "X: %.2f")) {
+	//		scene.slicing(slicingPos, slicingDir);
+	//	}
+	//	ImGui::PopItemWidth();
+
+	//	ImGui::SameLine();
+
+	//	ImGui::PushItemWidth(70);
+	//	if (ImGui::SliderFloat("##CenterY", &slicingPos.y, 0, 1.0f, "Y: %.2f")) {
+	//		scene.slicing(slicingPos, slicingDir);
+	//	}
+	//	ImGui::PopItemWidth();
+
+	//	ImGui::SameLine();
+
+	//	ImGui::PushItemWidth(70);
+	//	if (ImGui::SliderFloat("##CenterZ", &slicingPos.z, 0, 1.0f, "Z: %.2f")) {
+	//		scene.slicing(slicingPos, slicingDir);
+	//	}
+	//	ImGui::PopItemWidth();
+
+	//	ImGui::EndGroup();
+
+
+	//	ImGui::LabelText("##label SlicingDir", "Direction");
+	//	ImGui::BeginGroup();
+	//	ImGui::PushItemWidth(70);
+	//	if (ImGui::SliderFloat("##DirX", &slicingDir.x, 0, 1.0f, "X: %.2f")) {
+	//		scene.slicing(slicingPos, slicingDir);
+	//	}
+	//	ImGui::PopItemWidth();
+
+	//	ImGui::SameLine();
+
+	//	ImGui::PushItemWidth(70);
+	//	if (ImGui::SliderFloat("##DirY", &slicingDir.y, 0, 1.0f, "Y: %.2f")) {
+	//		scene.slicing(slicingPos, slicingDir);
+	//	}
+	//	ImGui::PopItemWidth();
+
+	//	ImGui::SameLine();
+
+	//	ImGui::PushItemWidth(70);
+	//	if (ImGui::SliderFloat("##DirZ", &slicingDir.z, 0, 1.0f, "Z: %.2f")) {
+	//		scene.slicing(slicingPos, slicingDir);
+	//	}
+	//	ImGui::PopItemWidth();
+
+	//	ImGui::EndGroup();
+
+	//}
+
+	//if (ImGui::CollapsingHeader("Background"))
+	//{
+	//	if (ImGui::ColorPicker3("BgColor", (float*)&bgColor)) {
+	//		renderer.setBgColor(bgColor);
+	//	}
+	//}
+
+	//if (ImGui::CollapsingHeader("Colormap"))
+	//{
+	//	static const char* colorModes[] = { "direction ", "normal","constant" };
+	//	static int currentItemColorMap = 0;
+	//	if (ImGui::BeginCombo("##colorMapping", colorModes[currentItemColorMap])) {
+	//		for (int i = 0; i < IM_ARRAYSIZE(colorModes); i++) {
+	//			bool isSelected = (currentItemColorMap == i);
+	//			if (ImGui::Selectable(colorModes[i], isSelected)) {
+	//				currentItemColorMap = i;
+	//				renderer.setColorMode(i);
+	//			}
+	//			if (isSelected && i != 2)
+	//				ImGui::SetItemDefaultFocus();
+	//		}
+	//		ImGui::EndCombo();
+	//	}
+	//	if (2 == currentItemColorMap) {
+	//		if (ImGui::ColorPicker3("Color", (float*)&colorMapConstant, ImGuiColorEditFlags_NoInputs)) {
+	//			renderer.setColorConstant(colorMapConstant);
+	//		}
+	//	}
+	//}
+
+	//if (ImGui::CollapsingHeader("lighting mode"))
+	//{
+	//	static const char* lightingModes[] = { "normal", "PBR" };
+	//	static int currentItemLightingMode = 0;
+	//	if (ImGui::BeginCombo("##lightingMode", lightingModes[currentItemLightingMode])) {
+	//		for (int i = 0; i < IM_ARRAYSIZE(lightingModes); i++) {
+	//			bool isSelected = (currentItemLightingMode == i);
+	//			if (ImGui::Selectable(lightingModes[i], isSelected)) {
+	//				currentItemLightingMode = i;
+	//				renderer.setLightingMode(i);
+	//			}
+	//			if (isSelected && i != 1)
+	//				ImGui::SetItemDefaultFocus();
+	//		}
+	//		ImGui::EndCombo();
+	//	}
+	//	if (1 == currentItemLightingMode) {
+	//		if (ImGui::SliderFloat("roughness", &roughness, 0.0f, 1.0f)) {
+	//			scene.setInstanceMaterial(roughness, metallic);
+	//		}
+	//		if (ImGui::SliderFloat("metallic", &metallic, 0.0f, 1.0f)) {
+	//			scene.setInstanceMaterial(roughness, metallic);
+	//		}
+	//	}
+	//}
+
+	if (ImGui::CollapsingHeader("Post effects"))
+	{
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "ssao");
+		ImGui::Text("control the area of shadow produced on model");
+
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Contrast");
+		ImGui::Text("as its name indicated");
+
+		//if (ImGui::SliderFloat("Contrast", &contrast, 0.0f, 1.0f)) {
+		//	renderer.setContrast(contrast * 2);
+		//}
+		//if (ImGui::SliderFloat("Brightness", &brightness, 0.0f, 1.0f)) {
+		//	renderer.setBrightness(brightness);
+		//}
+		//if (ImGui::SliderFloat("Saturation", &saturation, 0.0f, 1.0f)) {
+		//	renderer.setSaturation(saturation);
+		//}
+		//if (ImGui::SliderFloat("Sharpening", &sharpening, 0.0f, 1.0f)) {
+		//	renderer.setSharpening(sharpening);
+		//}
+		//if (ImGui::SliderFloat("Color flattening", &colorInterval, 0.0f, 1.0f)) {
+		//	renderer.setColorFlattening(colorInterval / 2);
+		//}
+
+	}
+	ImGui::End();
 }
 
 void Application::renderFrame() {
