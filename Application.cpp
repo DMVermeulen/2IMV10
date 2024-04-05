@@ -451,170 +451,93 @@ void Application::renderSettingPanel() {
 }
 
 void Application::renderTipsPanel() {
-	ImGui::Begin("Tips");
-	//if (ImGui::CollapsingHeader("Models"))
-	//{
-	//	static int currentItemInstance = 0;
-	//	// Add new instance
-	//	if (ImGui::Button("Add..."))
-	//		fileDialog.Open();
-	//	fileDialog.Display();
-	//	if (fileDialog.HasSelected())
-	//	{
-	//		std::string fileName = fileDialog.GetSelected().string();
-	//		std::size_t pos = fileName.find_last_of('\\'); // Find the last '\' character
-	//		std::string instanceName;
-	//		if (pos != std::string::npos)
-	//			instanceName = fileName.substr(pos + 1);
-	//		items.push_back(instanceName);
-	//		scene.addInstance(fileName);
-	//		scene.setActivatedInstance(int(items.size()) - 1);
-	//		scene.getInstanceSettings(&fiberBundling, &enableSlicing, &slicingPos, &slicingDir);
-	//		currentItemInstance = int(items.size()) - 1;
-	//		fileDialog.ClearSelected();
-	//	}
-	//	ImGui::SameLine();
-	//	// Remove instance
-	//	if (ImGui::Button("Remove")) {
-	//		scene.removeInstance(currentItemInstance);
-	//		items.erase(items.begin() + currentItemInstance);
-	//		if (items.size() > 0) {
-	//			scene.setActivatedInstance(0);
-	//			scene.getInstanceSettings(&fiberBundling, &enableSlicing, &slicingPos, &slicingDir);
-	//			fiberBundling *= bundleScaleFactor;
-	//			renderer.updateShadingPassInstanceInfo();
-	//			currentItemInstance = 0;
-	//		}
-	//		else {
-	//			currentItemInstance = -1;
-	//			enableBundling = false;
-	//			fiberBundling = 0;
-	//			scene.updateFiberBundlingStatus(enableBundling);
-	//		}
-	//	}
+	//ImGui::SetNextWindowSize(ImVec2(600, -1));
+	ImGui::SetNextWindowSizeConstraints(ImVec2(550, -1), ImVec2(FLT_MAX, FLT_MAX));
+	bool open = false;
+	ImGui::Begin("Tips",&open);
 
-	//	//Select an instance to visualize
-	//	if (items.size() > 0) {
-	//		if (ImGui::BeginCombo("##instances", items[currentItemInstance].c_str())) {
-	//			for (int i = 0; i < items.size(); i++) {
-	//				bool isSelected = (currentItemInstance == i);
-	//				if (ImGui::Selectable(items[i].c_str(), isSelected)) {
-	//					currentItemInstance = i;
-	//					scene.setActivatedInstance(i);
-	//					scene.getInstanceSettings(&fiberBundling, &enableSlicing, &slicingPos, &slicingDir);
-	//					fiberBundling *= bundleScaleFactor;
-	//					renderer.updateShadingPassInstanceInfo();
-	//				}
-	//				if (isSelected)
-	//					ImGui::SetItemDefaultFocus();
-	//			}
-	//			ImGui::EndCombo();
-	//		}
-	//	}
-	//}
+	if (ImGui::CollapsingHeader("Models"))
+	{
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Add");
+		ImGui::Text("Add a model through the file browser. Automatically switch to the new model");
 
-	//if (ImGui::CollapsingHeader("View"))
-	//{
-	//	if (ImGui::SliderFloat("camera speed", &cameraSpeed, 0.0f, 200.0f)) {
-	//		camera.setSpeed(cameraSpeed);
-	//	}
-	//}
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Remove");
+		ImGui::Text("Remove current model. Automatically switch to the first one in the model list");
+	}
 
-	//if (ImGui::CollapsingHeader("Fiber Bundling"))
-	//{
-	//	if (ImGui::Checkbox("Enable", &enableBundling)) {
-	//		scene.updateFiberBundlingStatus(enableBundling);
-	//		if (false == enableBundling)
-	//			fiberBundling = 0;
-	//	}
+	if (ImGui::CollapsingHeader("View"))
+	{
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Camera speed");
+		ImGui::Text("Speed of camera movement");
+	}
 
-	//	if (enableBundling) {
-	//		if (ImGui::SliderFloat("bundling", &fiberBundling, 0.0f, 1.0f)) {
-	//			scene.edgeBundling(fiberBundling / bundleScaleFactor);
-	//		}
-	//	}
+	if (ImGui::CollapsingHeader("Fiber bundling"))
+	{
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Enable");
+		ImGui::Text("Enable fiber bundling. Large textures on GPU will be created if enabled. Make sure you have at least 2GB video memory available");
 
-	//	if (ImGui::SliderFloat("Line width", &lineWidth, 0.0f, 1.0f)) {
-	//		renderer.setLineWidth(lineWidth * 3);
-	//	}
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "bundling");
+		ImGui::Text("Control the degree of bundling. Large value produces a more simplified model");
 
-	//}
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "lineWidth");
+		ImGui::Text("As its named indicated");
+	}
 
-	//if (ImGui::CollapsingHeader("Slicing"))
-	//{
-	//	if (ImGui::Checkbox("Enable Slicing", &enableSlicing)) {
-	//		scene.updateInstanceEnableSlicing(slicingPos, slicingDir, enableSlicing);
-	//	}
+	if (ImGui::CollapsingHeader("Slicing"))
+	{
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Enable");
+		ImGui::Text("Slicing the model at arbitrary plane. This does not require any additional memory, so feel free to enable it.");
 
-	//	//if (ImGui::SliderFloat3("slicing pos", &slicingPos.x, 0, 1.0f)) {
-	//	//	scene.slicing(slicingPos, slicingDir);
-	//	//}
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Center");
+		ImGui::Text("Anchor point of the slicing plane. Values are defined relative to the size of the bounding box of the model.");
 
-	//	//if (ImGui::SliderFloat3("slicing dir", &slicingDir.x, 0, 1.0f)) {
-	//	//	scene.slicing(slicingPos, slicingDir);
-	//	//}
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Direction");
+		ImGui::Text("Normal vector of the slicing plane. Values are defined relative to the size of the bounding box of the model.");
+	}
 
-	//	ImGui::LabelText("##label SlicingCenter", "Center");
-	//	ImGui::BeginGroup();
-	//	ImGui::PushItemWidth(70);
-	//	if (ImGui::SliderFloat("##CenterX", &slicingPos.x, 0, 1.0f, "X: %.2f")) {
-	//		scene.slicing(slicingPos, slicingDir);
-	//	}
-	//	ImGui::PopItemWidth();
+	if (ImGui::CollapsingHeader("Color mapping"))
+	{
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "option: direction");
+		ImGui::Text("Shade a fragment by its direction vector (absolute value)");
 
-	//	ImGui::SameLine();
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "option: normal");
+		ImGui::Text("Shade a fragment by its normal vector (changes with your camera view)");
 
-	//	ImGui::PushItemWidth(70);
-	//	if (ImGui::SliderFloat("##CenterY", &slicingPos.y, 0, 1.0f, "Y: %.2f")) {
-	//		scene.slicing(slicingPos, slicingDir);
-	//	}
-	//	ImGui::PopItemWidth();
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "option: constant");
+		ImGui::Text("Assgin a constant color.");
+	}
 
-	//	ImGui::SameLine();
+	if (ImGui::CollapsingHeader("Lighting mode"))
+	{
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "option: normal");
+		ImGui::Text("No lighting applied");
 
-	//	ImGui::PushItemWidth(70);
-	//	if (ImGui::SliderFloat("##CenterZ", &slicingPos.z, 0, 1.0f, "Z: %.2f")) {
-	//		scene.slicing(slicingPos, slicingDir);
-	//	}
-	//	ImGui::PopItemWidth();
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "option: PBR");
+		ImGui::Text("Physical based rendering, enable defining materials (roughness and metalness)");
+	}
 
-	//	ImGui::EndGroup();
+	if (ImGui::CollapsingHeader("Post effects"))
+	{
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "ssao");
+		ImGui::Text("Screen space ambient occlusion, control the area of shadow produced on model");
 
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Contrast");
+		ImGui::Text("as its name indicated");
 
-	//	ImGui::LabelText("##label SlicingDir", "Direction");
-	//	ImGui::BeginGroup();
-	//	ImGui::PushItemWidth(70);
-	//	if (ImGui::SliderFloat("##DirX", &slicingDir.x, 0, 1.0f, "X: %.2f")) {
-	//		scene.slicing(slicingPos, slicingDir);
-	//	}
-	//	ImGui::PopItemWidth();
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Brightness");
+		ImGui::Text("as its name indicated");
 
-	//	ImGui::SameLine();
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Saturation");
+		ImGui::Text("as its name indicated");
 
-	//	ImGui::PushItemWidth(70);
-	//	if (ImGui::SliderFloat("##DirY", &slicingDir.y, 0, 1.0f, "Y: %.2f")) {
-	//		scene.slicing(slicingPos, slicingDir);
-	//	}
-	//	ImGui::PopItemWidth();
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Sharpening");
+		ImGui::Text("as its name indicated");
 
-	//	ImGui::SameLine();
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Color flattening");
+		ImGui::Text("Distritize the color space, produce toon-like style (not good yet)");
+	}
+	ImGui::End();
 
-	//	ImGui::PushItemWidth(70);
-	//	if (ImGui::SliderFloat("##DirZ", &slicingDir.z, 0, 1.0f, "Z: %.2f")) {
-	//		scene.slicing(slicingPos, slicingDir);
-	//	}
-	//	ImGui::PopItemWidth();
-
-	//	ImGui::EndGroup();
-
-	//}
-
-	//if (ImGui::CollapsingHeader("Background"))
-	//{
-	//	if (ImGui::ColorPicker3("BgColor", (float*)&bgColor)) {
-	//		renderer.setBgColor(bgColor);
-	//	}
-	//}
 
 	//if (ImGui::CollapsingHeader("Colormap"))
 	//{
@@ -639,58 +562,7 @@ void Application::renderTipsPanel() {
 	//	}
 	//}
 
-	//if (ImGui::CollapsingHeader("lighting mode"))
-	//{
-	//	static const char* lightingModes[] = { "normal", "PBR" };
-	//	static int currentItemLightingMode = 0;
-	//	if (ImGui::BeginCombo("##lightingMode", lightingModes[currentItemLightingMode])) {
-	//		for (int i = 0; i < IM_ARRAYSIZE(lightingModes); i++) {
-	//			bool isSelected = (currentItemLightingMode == i);
-	//			if (ImGui::Selectable(lightingModes[i], isSelected)) {
-	//				currentItemLightingMode = i;
-	//				renderer.setLightingMode(i);
-	//			}
-	//			if (isSelected && i != 1)
-	//				ImGui::SetItemDefaultFocus();
-	//		}
-	//		ImGui::EndCombo();
-	//	}
-	//	if (1 == currentItemLightingMode) {
-	//		if (ImGui::SliderFloat("roughness", &roughness, 0.0f, 1.0f)) {
-	//			scene.setInstanceMaterial(roughness, metallic);
-	//		}
-	//		if (ImGui::SliderFloat("metallic", &metallic, 0.0f, 1.0f)) {
-	//			scene.setInstanceMaterial(roughness, metallic);
-	//		}
-	//	}
-	//}
 
-	if (ImGui::CollapsingHeader("Post effects"))
-	{
-		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "ssao");
-		ImGui::Text("control the area of shadow produced on model");
-
-		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Contrast");
-		ImGui::Text("as its name indicated");
-
-		//if (ImGui::SliderFloat("Contrast", &contrast, 0.0f, 1.0f)) {
-		//	renderer.setContrast(contrast * 2);
-		//}
-		//if (ImGui::SliderFloat("Brightness", &brightness, 0.0f, 1.0f)) {
-		//	renderer.setBrightness(brightness);
-		//}
-		//if (ImGui::SliderFloat("Saturation", &saturation, 0.0f, 1.0f)) {
-		//	renderer.setSaturation(saturation);
-		//}
-		//if (ImGui::SliderFloat("Sharpening", &sharpening, 0.0f, 1.0f)) {
-		//	renderer.setSharpening(sharpening);
-		//}
-		//if (ImGui::SliderFloat("Color flattening", &colorInterval, 0.0f, 1.0f)) {
-		//	renderer.setColorFlattening(colorInterval / 2);
-		//}
-
-	}
-	ImGui::End();
 }
 
 void Application::renderFrame() {
