@@ -36,6 +36,8 @@ public:
 	bool isEmpty();
 	void getInstanceSettings(float* bundle, bool* enableSlicing, glm::vec3* slicePos, glm::vec3* sliceDir);
 	void updateFiberBundlingStatus(bool enable);
+	void setBundlerAccuracy(float acc);
+	float getRequiredVideoMem(float acc);
 private:
 	//parameters used to build triangles from streamlines
 	float radius = 0.1f;

@@ -153,8 +153,59 @@ void Application::mainLoop() {
 }
 
 void Application::renderUI() {
+	//ImGuiStyle& style = ImGui::GetStyle();
+	//ImVec4 bgColor = ImVec4(0.0f, 0.0f, 0.0f, 1.0f); // white background color
+	//ImVec4 textColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); // black text color
+	//style.Colors[ImGuiCol_WindowBg] = bgColor;
 	renderSettingPanel();
-	renderTipsPanel();
+	//renderTipsPanel();
+}
+
+void Application::showWarningDialogue() {
+
+	ImVec2 displaySize = ImGui::GetIO().DisplaySize;
+	ImVec2 windowSize(400, 200);
+	ImVec2 windowPos((displaySize.x - windowSize.x) * 0.5f, (displaySize.y - windowSize.y) * 0.5f);
+	ImGui::SetNextWindowPos(windowPos);
+	ImGui::SetNextWindowSize(windowSize, ImGuiCond_Always);
+
+	ImGuiStyle& style = ImGui::GetStyle();
+	ImVec4 bgColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); // white background color
+	ImVec4 textColor = ImVec4(0.0f, 0.0f, 0.0f, 1.0f); // black text color
+	style.Colors[ImGuiCol_WindowBg] = bgColor;
+	ImGui::PushStyleColor(ImGuiCol_Text, textColor);
+
+	//ImGui::Begin("Warning",&showWarning);
+	if (!ImGui::Begin("Warning", &showWarning, ImGuiWindowFlags_NoMove))
+	{
+		ImGui::End();
+		return;
+	}
+	ImGui::Spacing();
+	ImGui::Text("This functionality requires at least 2GB video memory. Are you sure to Continue?");
+	ImGui::Spacing();
+
+	if (ImGui::Button("Yes")) {
+		showFiberSetting = true;
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("No")) {
+
+		showWarning = false;
+		enableBundling = false;
+		enableSettingInput = true;
+	}
+
+	ImGui::End();
+
+	bgColor = ImVec4(0.0f, 0.0f, 0.0f, 0.85f); // white background color
+	textColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); // black text color
+	style.Colors[ImGuiCol_WindowBg] = bgColor;
+	ImGui::PushStyleColor(ImGuiCol_Text, textColor);
+}
+
+void Application::showFiberSettingPanel() {
+
 }
 
 void Application::renderSettingPanel() {
@@ -162,9 +213,10 @@ void Application::renderSettingPanel() {
 		static float mouseSensitivity = 0.0f;
 		static float tubeRadius = 0.1f;
 		static float tubeGranularity = 1;
-		static bool enableBundling = false;
+		static float bundlingAcc = 0.5f;
+		static float requiredVideoMem = 2.7;
 		static float fiberBundling = 0;
-		const static float bundleScaleFactor = 25; //45
+		const static float bundleScaleFactor = 30; //45
 		static float lineWidth = 0.1f;
 		static float roughness = 0.2f;
 		static float metallic = 0.8f;
@@ -188,7 +240,7 @@ void Application::renderSettingPanel() {
 		//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 		//ImGui::End();
 
-		ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 300, 0));
+		ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 350, 0));
 
 		ImGui::Begin("Settings");
 		if (ImGui::CollapsingHeader("Models"))
@@ -265,11 +317,19 @@ void Application::renderSettingPanel() {
 				 scene.updateFiberBundlingStatus(enableBundling);
 				 if (false == enableBundling)
 					 fiberBundling = 0;
+				 //if (enableBundling) {
+					// showWarning = true;
+					// enableSettingInput = false;
+				 //}
 			}
 
 			if (enableBundling) {
+				ImGui::Text("Required video memory: %.1f GB", scene.getRequiredVideoMem(bundlingAcc));
 				if (ImGui::SliderFloat("bundling", &fiberBundling, 0.0f, 1.0f)) {
 					scene.edgeBundling(fiberBundling/ bundleScaleFactor);
+				}
+				if (ImGui::SliderFloat("accuracy", &bundlingAcc, 0.0f, 1.0f)) {
+					scene.setBundlerAccuracy(bundlingAcc);
 				}
 			}
 
@@ -281,7 +341,7 @@ void Application::renderSettingPanel() {
 
 		if (ImGui::CollapsingHeader("Slicing"))
 		{
-			if (ImGui::Checkbox("Enable Slicing", &enableSlicing)) {
+			if (ImGui::Checkbox("Enable Slicing", &enableSlicing) && enableSettingInput) {
 				scene.updateInstanceEnableSlicing(slicingPos,slicingDir,enableSlicing);
 			}
 
@@ -388,7 +448,7 @@ void Application::renderSettingPanel() {
 			}
 		}
 
-		if (ImGui::CollapsingHeader("lighting mode"))
+		if (ImGui::CollapsingHeader("Lighting mode"))
 		{
 			static const char* lightingModes[] = { "normal", "PBR" };
 			static int currentItemLightingMode = 0;
@@ -416,25 +476,41 @@ void Application::renderSettingPanel() {
 
 		if (ImGui::CollapsingHeader("Post effects"))
 		{
+			ImGui::PushItemWidth(210);
 			if (ImGui::SliderFloat("Ambient occlusion", &ssao, 0.0f, 1.0f)) {
 				renderer.setSSAORadius(ssao*50);
 			}
+			ImGui::PopItemWidth();
+
+			ImGui::PushItemWidth(210);
 			if (ImGui::SliderFloat("Contrast", &contrast, 0.0f, 1.0f)) {
 				renderer.setContrast(contrast*2);
 			}
+			ImGui::PopItemWidth();
+
+			ImGui::PushItemWidth(210);
 			if (ImGui::SliderFloat("Brightness", &brightness, 0.0f, 1.0f)) {
 				renderer.setBrightness(brightness);
 			}
+			ImGui::PopItemWidth();
+
+			ImGui::PushItemWidth(210);
 			if (ImGui::SliderFloat("Saturation", &saturation, 0.0f, 1.0f)) {
 				renderer.setSaturation(saturation);
 			}
+			ImGui::PopItemWidth();
+
+			ImGui::PushItemWidth(210);
 			if (ImGui::SliderFloat("Sharpening", &sharpening, 0.0f, 1.0f)) {
 				renderer.setSharpening(sharpening);
 			}
+			ImGui::PopItemWidth();
+
+			ImGui::PushItemWidth(210);
 			if (ImGui::SliderFloat("Color flattening", &colorInterval, 0.0f, 1.0f)) {
 	            renderer.setColorFlattening(colorInterval/2);
             }
-
+			ImGui::PopItemWidth();
 		}
 
 		ImGui::End();
@@ -448,21 +524,26 @@ void Application::renderSettingPanel() {
 			show_another_window = false;
 		ImGui::End();
 	}
+
+	//some other windows
+	if (showWarning)
+		showWarningDialogue();
+	if (showFiberSetting)
+		showFiberSettingPanel();
 }
 
 void Application::renderTipsPanel() {
-	//ImGui::SetNextWindowSize(ImVec2(600, -1));
-	ImGui::SetNextWindowSizeConstraints(ImVec2(550, -1), ImVec2(FLT_MAX, FLT_MAX));
-	bool open = false;
-	ImGui::Begin("Tips",&open);
+	ImGui::SetNextWindowSize(ImVec2(540, -1));
+	//ImGui::SetNextWindowSizeConstraints(ImVec2(300, -1), ImVec2(FLT_MAX, FLT_MAX));
+	ImGui::Begin("Tips");
 
 	if (ImGui::CollapsingHeader("Models"))
 	{
 		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Add");
-		ImGui::Text("Add a model through the file browser. Automatically switch to the new model");
+		ImGui::Text("Add a model through the file browser.\nAutomatically switch to the new model");
 
 		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Remove");
-		ImGui::Text("Remove current model. Automatically switch to the first one in the model list");
+		ImGui::Text("Remove current model. \nAutomatically switch to the first one in the model list");
 	}
 
 	if (ImGui::CollapsingHeader("View"))
@@ -474,10 +555,10 @@ void Application::renderTipsPanel() {
 	if (ImGui::CollapsingHeader("Fiber bundling"))
 	{
 		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Enable");
-		ImGui::Text("Enable fiber bundling. Large textures on GPU will be created if enabled. Make sure you have at least 2GB video memory available");
+		ImGui::Text("Enable fiber bundling. \nLarge textures on GPU will be created if enabled. \nMake sure you have at least 3GB video memory available");
 
 		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "bundling");
-		ImGui::Text("Control the degree of bundling. Large value produces a more simplified model");
+		ImGui::Text("Control the degree of bundling. \nLarge value produces a more simplified model");
 
 		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "lineWidth");
 		ImGui::Text("As its named indicated");
@@ -486,19 +567,19 @@ void Application::renderTipsPanel() {
 	if (ImGui::CollapsingHeader("Slicing"))
 	{
 		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Enable");
-		ImGui::Text("Slicing the model at arbitrary plane. This does not require any additional memory, so feel free to enable it.");
+		ImGui::Text("Slicing the model at arbitrary plane. \nThis does not require any additional memory, so feel free to enable it.");
 
 		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Center");
-		ImGui::Text("Anchor point of the slicing plane. Values are defined relative to the size of the bounding box of the model.");
+		ImGui::Text("Anchor point of the slicing plane. \nValues are defined relative to the size of the bounding box of the model.");
 
 		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Direction");
-		ImGui::Text("Normal vector of the slicing plane. Values are defined relative to the size of the bounding box of the model.");
+		ImGui::Text("Normal vector of the slicing plane. \nValues are defined relative to the size of the bounding box of the model.");
 	}
 
 	if (ImGui::CollapsingHeader("Color mapping"))
 	{
 		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "option: direction");
-		ImGui::Text("Shade a fragment by its direction vector (absolute value)");
+		ImGui::Text("Shade a fragment by its direction vector");
 
 		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "option: normal");
 		ImGui::Text("Shade a fragment by its normal vector (changes with your camera view)");
@@ -513,13 +594,13 @@ void Application::renderTipsPanel() {
 		ImGui::Text("No lighting applied");
 
 		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "option: PBR");
-		ImGui::Text("Physical based rendering, enable defining materials (roughness and metalness)");
+		ImGui::Text("Physical based rendering. \nEnable defining roughness and metalness");
 	}
 
 	if (ImGui::CollapsingHeader("Post effects"))
 	{
-		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "ssao");
-		ImGui::Text("Screen space ambient occlusion, control the area of shadow produced on model");
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Ambient occlusion");
+		ImGui::Text("Control the area of shadow produced.");
 
 		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Contrast");
 		ImGui::Text("as its name indicated");
@@ -534,7 +615,7 @@ void Application::renderTipsPanel() {
 		ImGui::Text("as its name indicated");
 
 		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Color flattening");
-		ImGui::Text("Distritize the color space, produce toon-like style (not good yet)");
+		ImGui::Text("Distritize the color space. \nProduce toon-like style (not good yet)");
 	}
 	ImGui::End();
 
@@ -569,6 +650,7 @@ void Application::renderFrame() {
 	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	renderer.renderFrame();
 	//glfwSwapBuffers(window);
+	//showFps();
 }
 
 //handle window resizing
@@ -633,6 +715,27 @@ void Application::window_iconify_callback(GLFWwindow* window, int iconified) {
 	else {
 		// window was restored from minimized state
 		m_app->suspendRender = false;
+	}
+}
+
+void Application::showFps() {
+	if (cnt > 200)
+		return;
+
+	frameCount++;
+	currentTime = glfwGetTime();
+
+	// Calculate time difference
+	double timeInterval = currentTime - previousTime;
+
+	if (timeInterval > 0.5) {
+		fps = frameCount / timeInterval;
+		previousTime = currentTime;
+		frameCount = 0;
+		std::cout << "FPS: " << fps << std::endl;
+		aveFps = (aveFps * cnt + fps) / (cnt + 1);
+		std::cout << "ave FPS: " << aveFps << std::endl;
+		cnt++;
 	}
 }
 

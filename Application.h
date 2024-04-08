@@ -66,6 +66,21 @@ private:
 	void renderUI();
 	void renderSettingPanel();
 	void renderTipsPanel();
+	void showWarningDialogue();
+	void showFiberSettingPanel();
+	bool enableSettingInput = true;
+	bool enableBundling = false;
+	bool showWarning = false;
+	bool showFiberSetting = false;
 	//UI callbacks
+
+	//for statistics
+	double fps = 0;
+	int cnt = 0;
+	int frameCount = 0;
+	int currentTime = 0;
+	int previousTime = 0;
+	void showFps();
+	double aveFps = 0;
 
 };

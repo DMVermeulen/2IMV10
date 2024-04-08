@@ -20,6 +20,8 @@ public:
 	GLuint getBundledFibers();
 	void updateInstanceFibers();
 	void switcheToInstance(Instance* instance);
+	void setAccuracy(float acc);
+	float getRequiredVideoMem(float acc);
 private:
 	bool isEnable=false;
 	//instance specific variables
@@ -38,8 +40,12 @@ private:
 	std::vector<uint32_t> resampledTrackSize;
 
 	//universal parameter settings
+	const int nVoxelsMIN = 150;
+	const int nVoxelsMAX = 420;
+	const float minRequireVideoMem = 2.3f;
+	const float maxRequireVideoMem = 3.7f;
 	float resampleFactor = 120;
-	uint32_t nVoxels_Z = 400;  //500
+	uint32_t nVoxels_Z = 275;  //500
 	uint32_t nVoxels_X;
 	uint32_t nVoxels_Y;
 	float voxelUnitSize;

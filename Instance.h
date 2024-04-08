@@ -115,4 +115,6 @@ private:
 	std::vector<glm::vec3>directions;
 	void updateTubes(std::vector<glm::vec3>& currentTracks);
 
+
+	void reduceFibers();
 };

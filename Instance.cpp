@@ -16,8 +16,22 @@ Instance::Instance(
 	trackToLinesShader(_trackToLinesShader)
 {
 	loadTracksFromTCK(path);
+	//reduceFibers(); //only used for performance evaluation
 	initAddition();
 	updateTubes(tracks);
+}
+
+void Instance::reduceFibers() {
+	int interval = trackOffset.size() / 10;
+	int scale = 8;
+	int nFibers = scale * interval;
+	std::vector<glm::vec3> subTracks(tracks.begin(), tracks.begin() + trackOffset.at(nFibers));
+	std::vector<uint32_t> subTrackOffset(trackOffset.begin(), trackOffset.begin() + nFibers);
+	std::vector<uint32_t> subTrackSize(trackSize.begin(), trackSize.begin() + nFibers);
+	
+	tracks = subTracks;
+	trackOffset = subTrackOffset;
+	trackSize = subTrackSize;
 }
 
 //explicitly destroy opengl objects

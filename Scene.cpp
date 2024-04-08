@@ -74,6 +74,8 @@ void Scene::updateFiberBundlingStatus(bool enable) {
 }
 
 void Scene::edgeBundling(float p) {
+	if (p < 1e-5)
+		return;
 	//if (instances.size() > 0)
 	//	instances.at(activatedInstance).edgeBundlingGPU(p);
 	if (instances.size() > 0 && bundler.isEnabled()) {
@@ -141,5 +143,13 @@ bool Scene::isEmpty() {
 // return instance settings to GUI when switching instance
 void Scene::getInstanceSettings(float* bundle, bool* enableSlicing, glm::vec3* slicePos, glm::vec3* sliceDir) {
 	instances.at(activatedInstance).getSettings(bundle, enableSlicing,slicePos, sliceDir);
+}
+
+void Scene::setBundlerAccuracy(float acc) {
+	bundler.setAccuracy(acc);
+}
+
+float Scene::getRequiredVideoMem(float acc) {
+	return bundler.getRequiredVideoMem(acc);
 }
 

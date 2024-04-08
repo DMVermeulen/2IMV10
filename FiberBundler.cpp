@@ -268,6 +268,8 @@ bool FiberBundler::isEnabled() {
 }
 
 void FiberBundler::edgeBundlingGPU(float _p) {
+	auto start = std::chrono::high_resolution_clock::now();
+
 	bundle = _p;
 	//repeat bundling for nIter iterations
 
@@ -311,6 +313,11 @@ void FiberBundler::edgeBundlingGPU(float _p) {
 
 	//update vertex and direction buffer of the instance
 	updateInstanceFibers();
+
+	auto end = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+	std::cout << "Elapsed time: " << duration.count()/1e6 << " seconds" << std::endl;
+	
 }
 
 //resampledTracks->voxelCount
@@ -334,7 +341,6 @@ void FiberBundler::voxelCountPass() {
 
 //voxelVount->denseMap
 void FiberBundler::denseEstimationPass(float p) {
-	auto start = std::chrono::high_resolution_clock::now();
 	//Convolution on X
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, texVoxelCount);
 	glBindImageTexture(0, texDenseX, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
@@ -377,9 +383,6 @@ void FiberBundler::denseEstimationPass(float p) {
 	glDispatchCompute(1 + (unsigned int)totalVoxels / 128, 1, 1);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
-	auto end = std::chrono::high_resolution_clock::now();
-	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-	//std::cout << "Elapsed time: " << duration.count() << " microseconds" << std::endl;
 }
 
 //update tubes, stores to texUpdatedTubes
@@ -524,4 +527,28 @@ void FiberBundler::switcheToInstance(Instance* _instance) {
 	if (p > 0) {
 		edgeBundlingGPU(p);
 	}
+}
+
+// called to reset nVoxels to update the accuracy for bundling
+// acc: [0,1]
+// nVoxels_Z: [150-400]
+// Video memory: []
+void FiberBundler::setAccuracy(float acc) {
+	//clean up first
+	destroyTextures();
+	cleanHostMemory();
+
+	nVoxels_Z = nVoxelsMIN + acc * (nVoxelsMAX - nVoxelsMIN);
+	initForInstance();
+
+	//perform initial bundling for the currently activated instance
+	float p = instance->getBundleValue();
+	bundle = p;
+	if (p > 0) {
+		edgeBundlingGPU(p);
+	}
+}
+
+float FiberBundler::getRequiredVideoMem(float acc) {
+	return  minRequireVideoMem + acc * (maxRequireVideoMem - minRequireVideoMem);
 }
