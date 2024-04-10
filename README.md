@@ -1,4 +1,4 @@
-## System Requirement
+# System Requirement
 
 - It’s highly recommended to run the application on a PC with a Windows system (actually we didn’t test it on any other OS).
 - Make sure that you have a GPU enabled, with an appropriate version of GPU driver installed that supports OpenGL 4.3+.
