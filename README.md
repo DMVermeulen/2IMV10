@@ -1,6 +1,6 @@
 ## FiberVisualizer
 An intuitive and interactive OpengGL application for visualizing large-scale tractography dataset.
-![Screenshot of FiberVisualizer](screenshot.png)
+![Screenshot of FiberVisualizer](Screenshot.png)
 
 ## System Requirement
 
