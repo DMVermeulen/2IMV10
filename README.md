@@ -34,4 +34,4 @@ An intuitive and interactive OpengGL application for visualizing large-scale tra
 - View controlling: https://learnopengl.com/Getting-started/Camera
 - Shader compiler: https://learnopengl.com/Getting-started/Shaders
 - Compute shader compiler: https://learnopengl.com/Guest-Articles/2022/Compute-Shaders/Introduction
-- File browser: 
+- File browser: https://github.com/AirGuanZ/imgui-filebrowser
