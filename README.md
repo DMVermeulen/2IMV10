@@ -23,3 +23,15 @@ An intuitive and interactive OpengGL application for visualizing large-scale tra
 - Decompress `Release.zip` to some directory on your PC.
 - Run the `FiberVisualization.exe` inside.
 
+## Third party libraries
+- GLM: https://github.com/g-truc/glm
+- GLFW: https://www.glfw.org/
+- GLAD: https://glad.dav1d.de/
+- OpenGL 4.3: https://www.opengl.org/
+- Dear ImGUI: https://github.com/ocornut/imgui
+
+## Code References
+- View controlling: https://learnopengl.com/Getting-started/Camera
+- Shader compiler: https://learnopengl.com/Getting-started/Shaders
+- Compute shader compiler: https://learnopengl.com/Guest-Articles/2022/Compute-Shaders/Introduction
+- File browser: 
