@@ -324,7 +324,15 @@ void Application::renderSettingPanel() {
 			}
 
 			if (enableBundling) {
-				ImGui::Text("Required video memory: %.1f GB", scene.getRequiredVideoMem(bundlingAcc));
+				ImGui::SameLine();
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0, 0, 1.0f));
+				ImFont* font = ImGui::GetIO().Fonts->Fonts[0]; 
+				float fontSize = 35.0f;
+				font->Scale = fontSize / font->FontSize;
+				ImGui::Text("        Required video memory: %.1f GB", scene.getRequiredVideoMem(bundlingAcc));
+				font->Scale = 1.0f;
+				ImGui::PopStyleColor();
+
 				if (ImGui::SliderFloat("bundling", &fiberBundling, 0.0f, 1.0f)) {
 					scene.edgeBundling(fiberBundling/ bundleScaleFactor);
 				}
@@ -732,9 +740,9 @@ void Application::showFps() {
 		fps = frameCount / timeInterval;
 		previousTime = currentTime;
 		frameCount = 0;
-		std::cout << "FPS: " << fps << std::endl;
+		//std::cout << "FPS: " << fps << std::endl;
 		aveFps = (aveFps * cnt + fps) / (cnt + 1);
-		std::cout << "ave FPS: " << aveFps << std::endl;
+		//std::cout << "ave FPS: " << aveFps << std::endl;
 		cnt++;
 	}
 }

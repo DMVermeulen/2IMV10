@@ -45,7 +45,7 @@ private:
 	const float minRequireVideoMem = 2.3f;
 	const float maxRequireVideoMem = 3.7f;
 	float resampleFactor = 120;
-	uint32_t nVoxels_Z = 275;  //500
+	uint32_t nVoxels_Z = 300;  //500
 	uint32_t nVoxels_X;
 	uint32_t nVoxels_Y;
 	float voxelUnitSize;
